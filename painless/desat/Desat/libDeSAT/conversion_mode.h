@@ -1,0 +1,9 @@
+
+#ifndef _CONVERSION_MODE_H_
+#define _CONVERSION_MODE_H_
+
+typedef enum { TSEITIN_EXTENSION, PLAISTED_GREENBAUM_EXTENSION, EXPLOSION } ConstraintMode;
+
+#endif
+
+

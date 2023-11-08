@@ -1,0 +1,47 @@
+Copyright (C) 2011-2014 Microsoft Research
+
+This is DeSAT, a decomposition-based parallel SAT solver. The approach is
+described in: Y. Hamadi, J. Marques-Silva, C. M. Wintersteiger:
+Lazy Decomposition for Distributed Decision Procedures, Proceedings of the 10th
+International Workshop on Parallel and Distributed Methods in verifiCation,
+PDMC 2011.
+
+Requirements: Windows, Visual Studio 2013, MS-MPI, MiniSAT 1.14p, and the
+`patch' command.
+
+Instructions:
+
+If you don't have `patch', get it from the GNU win32 project:
+http://gnuwin32.sourceforge.net/packages/patch.htm
+
+Visual Studio does not come with an implementation of MPI, the MS incarnation
+thereof can be obtained here:
+http://www.microsoft.com/en-us/download/details.aspx?id=41634
+
+This code is based on MiniSAT-p 1.14 which is not included in the release. It
+can be obtained from http://minisat.se/MiniSat.html and comes under the MIT
+license. DeSAT comes with a Visual Studio project file to compile MiniSAT, and
+with a patch that fixes some compatibility issues.
+
+-- Download MiniSAT-p 1.14 and place extract the .zip file in the DeSAT
+   directory.
+
+-- Apply the patch:
+   cd "MiniSAT-p 1.14"
+   	win32.patch
+   (This also creates the Minisat.vcpxproj project file for Visual Studio.)
+
+-- Open DeSAT.sln in Visual Studio, chose build configuration (Debug or
+   Release) and build it (Build -> Build Solution).
+
+-- The final output is in Debug\DeSAT.exe or Release\DeSAT.exe.
+
+
+
+
+
+wget http://minisat.se/downloads/MiniSat_v1.14.2006-Aug-29.src.zip
+unzip MiniSat_v1.14.2006-Aug-29.src.zip
+mv MiniSat_v1.14 Minisat
+perl -p -e 's/\r$//' < Minisat-p\ 1.14/minisat.win32.patch > Minisat-p\ 1.14/minisat.unix.patch
+cat Minisat-p\ 1.14/minisat.unix.patch|  sed 's/\\/\//g' > Minisat-p\ 1.14/minisat.2.unix.patch

@@ -1,0 +1,5 @@
+#define VERSION "1.0.3"
+#define COMPILER "g++ -W -Wall -O3 -fpermissive -DNEMBEDDED -DNDEBUG -DNMETRICS -DNSTATISTICS"
+#define ID "79d8d8f20465e71fd2b0f193b468898cd803a59a"
+#define BUILD "Thu Sep 28 19:45:30 CEST 2023 Linux nissa 5.15.0-83-generic x86_64"
+#define DIR "/home/nissa/Documents/Thesis/bmctool_main/octo_bmctool/bmctool/painless/kissat/build"

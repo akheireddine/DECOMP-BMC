@@ -1,0 +1,47 @@
+# Files created after compilation #
+###################################
+painless
+*.o
+
+# Lingeling created files #
+###########################
+lingeling/lglcfg.h
+lingeling/lglcflags.h
+lingeling/liblgl.a
+lingeling/makefile
+
+# Glucose created files #
+#########################
+glucose/parallel/depend.mk
+glucose/parallel/lib_standard.a
+glucose/parallel/libglucose.a
+
+# Minisat created files #
+#########################
+minisat/build/*
+minisat/config.mk
+
+# MapleCOMSPS created files #
+#############################
+mapleCOMSPS/build/*
+
+# Other temporary indesiderable files #
+#######################################
+.*.swp                   # vim
+*~                       # emacs, gedit
+.nfs*                    # nfs
+
+
+*.a
+./lib
+
+
+# DeSAT crated files #
+#############################
+desat/desat
+desat/Desat/*.o
+desat/MiniSat/*.o*
+desat/MiniSat/depend.mak
+desat/MiniSat/minisat_*
+desat/mapleCOMSPS/build/*
+desat/mapleCOMSPS/mapleCOMSPS/mtl/*.mk
