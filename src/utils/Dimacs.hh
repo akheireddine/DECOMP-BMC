@@ -7,6 +7,8 @@
 #include <math.h> 
 #include <set>
 #include <unordered_set>
+#include <algorithm>
+
 #include "EnvBMC.hh"
 
 
@@ -110,19 +112,6 @@ static int parseVar_(StreamBuffer_& in)
     return var;
 }
 
-static void readClause_(StreamBuffer_& in, std::vector<int>& lits)
-{
-    int     parsed_lit;
-    lits.clear();
-    for (;;)
-    {
-        parsed_lit = parseInt_(in);
-        if (parsed_lit == 0) 
-            break;
-        lits.emplace_back( parsed_lit );
-    }
-}
-
 static void readClauseAddPartition_(StreamBuffer_& in, EnvBMC &env)
 {
     int     parsed_lit;
@@ -143,7 +132,6 @@ static void readClauseAddPartition_(StreamBuffer_& in, EnvBMC &env)
         }
         while(env.info_variables.size() <= abs(parsed_lit))
             env.info_variables.emplace_back(VB());
-        // printf(" %d ",env.info_variables[abs(parsed_lit)].num_partition);
         if(id_partition == -1)
             id_partition = env.info_variables[abs(parsed_lit)].num_partition;
         else if (id_partition != env.info_variables[abs(parsed_lit)].num_partition && 
@@ -161,48 +149,6 @@ static void readClauseAddPartition_(StreamBuffer_& in, EnvBMC &env)
         // printf("\t Partition %d : %d\n",i, env.clauses_partition[i].size());
 }
 
-
-
-static void parse_DIMACS_main(const char* filename, std::vector<std::vector<int>> & clauses, int& max_vars)
-{
-    gzFile in_gz = gzopen(filename, "rb");
-    StreamBuffer_ in(in_gz);
-
-    std::vector<int> lits;
-    int nb_clauses = 0;
-    int cnt     = 0;
-    for (;;)
-    {
-        skipWhitespace_(in);
-        if (*in == EOF) 
-            break;
-        else if (*in == 'p')
-        {
-            if (eagerMatch_(in, "p cnf"))
-            {
-                max_vars    = parseInt_(in);
-                nb_clauses = parseInt_(in);
-            }
-            else
-            {
-                std::cerr <<"PARSE ERROR! Unexpected char: "<<*in << std::endl;
-                exit(3);
-            }
-        } 
-        else if (*in == 'c' || *in == 'p')
-            skipLine_(in);
-        else
-        {
-            cnt++;
-            readClause_(in, lits);
-            clauses.emplace_back(lits); 
-        }
-    }
-       gzclose(in_gz);
-
-    if (cnt != nb_clauses)
-        std::cerr << "c PARSE ERROR! vars:"<<max_vars<<" DIMACS header mismatch: wrong number of clauses" << std::endl;
-}
 
 static bool operator_ltlspec(char in){
     return (in == ')'  || in == '&' || in == '|'  || 
@@ -255,7 +201,7 @@ static void readLTLSPEC(std::string filename, std::unordered_set<std::string> &l
 
     // Temporary string used to split the string.
     bool start = false, end= false;
-    for (int i = 10; i < lastLine.length(); i++){
+    for (size_t i = 10; i < lastLine.length(); i++){
         char c = lastLine[i];
         if(c == '('){
             start = true;
@@ -287,7 +233,7 @@ std::string parseNameVar(StreamBuffer_& in)
     return name;
 }
 
-int parseVarLoopStep(StreamBuffer_& in)
+int parseVarStep(StreamBuffer_& in)
 {
     int parsed_val = -1, var = -1;
     for (;;){
@@ -348,7 +294,7 @@ static void parse_NuSMV_DIMACS_main(const char* filename, EnvBMC &env)
                 int var_time = parseVar_(in);
                 std::string name = parseNameVar(in);
                 env.idmax_model = var_time;
-                while(env.info_variables.size() <= var_time)
+                while((int)env.info_variables.size() <= var_time)
                     env.info_variables.emplace_back(VB());
                 env.info_variables[var_time].num_step = time;
                 if(time == 0)
@@ -360,15 +306,12 @@ static void parse_NuSMV_DIMACS_main(const char* filename, EnvBMC &env)
                 if(env.ltl_varnames.find(name) != env.ltl_varnames.end())
                     env.info_variables[var_time].in_property = true;
             }
-            // c LOOP variable
-            else if ( *in == 'L' )
-                env.rename_loop.emplace_back(parseVarLoopStep(in));
             // c STEP variable
             else if ( *in == 'S'){
-                int v = parseVarLoopStep(in);
+                int v = parseVarStep(in);
                 while(env.info_variables.size() <= abs(v))
                     env.info_variables.emplace_back(VB());
-                env.info_variables[v].num_step = parseVarLoopStep(in);
+                env.info_variables[v].num_step = parseVarStep(in);
                 env.rename_step.emplace_back(v);
             }
             // c model

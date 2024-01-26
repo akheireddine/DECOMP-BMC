@@ -104,27 +104,6 @@ SolverFactory::createMiniSatSolver()
 
 
 SolverInterface *
-SolverFactory::createGlucoseSolver()
-{
-   int id = currentIdSolver.fetch_add(1);
-   SolverInterface * solver = new GlucoseSyrup(id);
-   solver->loadFormula(Parameters::getFilename());
-   return solver;
-}
-
-
-
-SolverInterface *
-SolverFactory::createLingelingSolver()
-{
-   int id = currentIdSolver.fetch_add(1);
-   SolverInterface * solver = new Lingeling(id);
-   solver->loadFormula(Parameters::getFilename());
-   return solver;
-}
-
-
-SolverInterface *
 SolverFactory::createMapleSolver()
 {
    int id = currentIdSolver.fetch_add(1);
@@ -153,29 +132,6 @@ SolverFactory::createDeSATSolvers(int nbSolvers, EnvBMC* env_bmc,
 }
 
 
-
-void
-SolverFactory::createGlucoseSolvers(int nbSolvers,
-                                    vector<SolverInterface *> & solvers)
-{
-   solvers.push_back(createGlucoseSolver());
-
-   for (size_t i = 1; i < nbSolvers; i++) {
-      solvers.push_back(cloneSolver(solvers[0]));
-   }
-}
-
-void
-SolverFactory::createLingelingSolvers(int nbSolvers,
-                                      vector<SolverInterface *> & solvers)
-{
-   solvers.push_back(createLingelingSolver());
-
-   for (size_t i = 1; i < nbSolvers; i++) {
-      solvers.push_back(cloneSolver(solvers[0]));
-   }
-}
-
 void
 SolverFactory::createMiniSatSolvers(int nbSolvers,
                                     vector<SolverInterface *> & solvers)
@@ -192,61 +148,6 @@ SolverFactory::createMapleSolvers(int nbSolvers,
    for (size_t i = 0; i < nbSolvers; i++) {
       solvers.push_back(createMapleSolver());
    }
-}
-
-void
-SolverFactory::createComboSolvers(int nbSolvers,
-                                  vector<SolverInterface *> & solvers)
-{
-   for (int i = 0; i < nbSolvers; i++) {
-      switch(i % 3) {
-         case 0 :
-            if (i == 0) {
-               solvers.push_back(SolverFactory::createGlucoseSolver());
-            } else {
-               solvers.push_back(SolverFactory::cloneSolver(solvers[0]));
-            }
-            break;
-
-         case 1 :
-            if (i == 1) {
-               solvers.push_back(SolverFactory::createLingelingSolver());
-            } else {
-               solvers.push_back(SolverFactory::cloneSolver(solvers[1]));
-            }
-            break;
-
-         case 2 :
-         default :
-            solvers.push_back(SolverFactory::createMiniSatSolver());
-            break;
-      }
-   }
-}
-
-SolverInterface *
-SolverFactory::cloneSolver(SolverInterface * other)
-{
-   SolverInterface * solver;
-   
-   int id = currentIdSolver.fetch_add(1);
-
-   switch(other->type) {
-      case GLUCOSE :
-         solver = new GlucoseSyrup((GlucoseSyrup&) *other, id);
-         break;
-
-      case LINGELING :
-         solver = new Lingeling((Lingeling&) *other, id);
-         break;
-
-      case MINISAT :
-      case MAPLE :
-      default :
-         return NULL;
-   }
-
-   return solver;
 }
 
 void

@@ -1,0 +1,59 @@
+-- Towers of Hanoi
+-- 
+-- 1. Only one disk can be moved at a time.
+-- 2. Each move consists of taking the upper disk from one of the stacks
+--    and placing it on top of another stack, i.e. a disk can only be moved
+--    if it is the uppermost disk on a stack.
+-- 3. No disk may be placed on top of a smaller disk.
+--  
+-- https://en.wikipedia.org/wiki/Tower_of_Hanoi
+
+
+MODULE disc(id, bl, move, to_peg)
+VAR
+ below: 0..5;
+ peg: 1..3;
+ASSIGN
+ init(peg) := 1;
+ next(peg) := move=id ? to_peg : peg;
+ init(below) := bl;
+ next(below) :=
+  case
+   below=move: 0;
+   clear & to_peg=peg: move;
+   TRUE: below;
+  esac;
+INVAR
+ -- we can only move when clear & then the peg must change
+ (move=id -> clear & to_peg != peg) &
+ -- when moving to this peg the disc must be smaller
+ (to_peg=peg -> move < id)
+DEFINE
+ clear := below = 0;
+
+MODULE main
+VAR
+ move: 1..5;
+ to_peg: 1..3;
+ a[1]: disc(1, 0, move, to_peg);
+ a[2]: disc(2, 1, move, to_peg);
+ a[3]: disc(3, 2, move, to_peg);
+ a[4]: disc(4, 3, move, to_peg);
+ a[5]: disc(5, 4, move, to_peg);
+ASSIGN
+ init(move) := 1;
+DEFINE
+ solved := a[1].peg=3 & a[2].peg=3 & a[3].peg=3 & a[4].peg=3 & a[5].peg=3;
+
+-- 1..3 discs can be clear at a time
+--SPEC AG count(a[1].clear,a[2].clear,a[3].clear,a[4].clear,a[5].clear) in {1,2,3}
+-- can always move a block eventually
+--SPEC AG ((EF move=1) & (EF move=2) & (EF move=3) & (EF move=4) & (EF move=5))
+-- can always move 1
+--SPEC AG (EX move=1)
+-- can't get to a state in which we can move 2 and 3 (as can always move 1
+--  and if we can move 2 it means we can't move 3)
+--SPEC AG !((EX move=3) & (EX move=2)) 
+
+-- get a solution
+ LTLSPEC G !solved

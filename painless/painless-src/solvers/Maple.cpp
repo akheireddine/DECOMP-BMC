@@ -55,65 +55,8 @@ void mapleExportClause(void *issuer, int lbd, vec<Lit> &cls)
 {
    Maple *mp = (Maple *)issuer;
 
-   // if (mp->memLimit > 0)
-   // {
-   //    double memP = MapleCOMSPS::memUsed() * 100.0 / mp->memLimit;
-   //    double gapP = 100 - memP;
-   //    /// Stop sharing and switch to filter I1
-   //    if (gapP < 20)
-   //    {
-   //       mp->code_filter_confl = 1;
-   //       return;
-   //    }
-   //    /// If more space switch to filter I5
-   //    else if (gapP > 30)
-   //       mp->code_filter_confl = 5;
-   // }
-
-   switch (mp->shrStrat)
-   {
-   /// Standard LBD filter
-   case 0:
-   {
-      if (lbd > mp->lbdLimit)
-         return;
-      break;
-   }
-   /// Combine LBD and I-BMC filter
-   case 1:
-   {
-      if (lbd <= 2)
-         break;
-      if (lbd >= 5)
-         return;
-      if (!mp->selectConflitClause_LBDI_OptimalConfig(cls, lbd))
-         return;
-      break;
-   }
-   /// ACCEPT  P CLAUSES OF LBD <= 5  +  OTHERS WITH LBD<=4
-   case 5:
-   {
-      if (lbd <= mp->lbdLimit)
-         break;
-      else if (lbd <= 5)
-      {
-         std::unordered_set<int> variable_confl;
-         for (int i = 0; i < cls.size(); i++)
-         {
-            int value = std::abs(INT_LIT(cls[i]));
-            variable_confl.insert(value);
-         }
-         // if (is_property_clause(variable_confl, mp->env_bmc))
-            // lbd = min(lbd, Parameters::getIntParam("param2", 3));
-      }
-      else
-         return;
-      break;
-   }
-   default:
-      std::cerr << "Problem export clause Maple Solver" << std::endl;
-      break;
-   }
+   if (lbd > mp->lbdLimit)
+      return;
 
    ClauseExchange *ncls = ClauseManager::allocClause(cls.size());
 
@@ -177,9 +120,7 @@ bool mapleImportClause(void *issuer, int *lbd, vec<Lit> &mcls)
 Maple::Maple(int id, EnvBMC *env) : SolverInterface(id, MAPLE), env_bmc(env), exportClauses(0)
 {
    lbdLimit = Parameters::getIntParam("lbd-limit", 4);
-   shrStrat = Parameters::getIntParam("shr-solver", 0);
    memLimit = Parameters::getIntParam("max-memory", -1); // in Megabyte
-   code_filter_confl = 5;
 
    solver = new SimpSolver();
 
@@ -275,42 +216,12 @@ void Maple::diversify(int id)
    }
 }
 
-// bool Maple::selectConflitClause(vec<Lit> &clause_confl)
-// {
-//    bool send_to_other = false;
-//    std::unordered_set<int> variable_confl;
-//    for (int i = 0; i < clause_confl.size(); i++)
-//    {
-//       int value = std::abs(INT_LIT(clause_confl[i]));
-//       variable_confl.insert(value);
-//    }
-//    ConstraintMode conversion_mode = TSEITIN_EXTENSION;
-//    send_to_other = FilterInterpolant(variable_confl, env_bmc, code_filter_confl, conversion_mode);
-
-//    return send_to_other;
-// }
-
-bool Maple::selectConflitClause_LBDI_OptimalConfig(vec<Lit> &clause_confl, int lbd)
-{
-   bool send_to_other = false;
-   std::unordered_set<int> variable_confl;
-   for (int i = 0; i < clause_confl.size(); i++)
-   {
-      int value = std::abs(INT_LIT(clause_confl[i]));
-      variable_confl.insert(value);
-   }
-   // send_to_other = shareClauseLBDI_OptimalConfig1(clauseType(variable_confl, env_bmc), lbd);
-
-   return send_to_other;
-}
-
 // Solve the formula with a given set of assumptions
 // return 10 for SAT, 20 for UNSAT, 0 for UNKNOWN
 SatResult
 Maple::solve(const vector<int> &cube)
 {
    unsetSolverInterrupt();
-   tracer << "PB " << id << " ::";
    vector<ClauseExchange *> tmp;
 
    tmp.clear();

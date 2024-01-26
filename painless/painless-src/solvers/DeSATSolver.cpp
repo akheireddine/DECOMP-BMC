@@ -79,28 +79,16 @@ void desatExportPartitionClause(void *issuer, std::vector<int> &cls)
   ncls->lbd = lbd;
 
   for (int i = 0; i < cls.size(); i++)
-  {
     ncls->lits[i] = cls[i];
-  }
 
   ncls->from = ms->id;
 
   ms->clausesToExport.addClause(ncls);
 }
 
-void desatExportRootClause(void *issuer, int lbd, std::vector<int> &cls)
+void desatExportgSolverClause(void *issuer, int lbd, std::vector<int> &cls)
 {
   DeSATSolver *ms = (DeSATSolver *)issuer;
-
-  // std::unordered_set<signed> variable_confl;
-  // for (int v : cls)
-  // {
-  //   signed value = std::abs(v);
-  //   variable_confl.insert(value);
-  // }
-  // std::vector<std::vector<int> > cls_cls;
-  // cls_cls.emplace_back(cls);
-  // LogInterpolantsConflType(variable_confl, cls_cls, ms->env_bmc, 1, opf_itp);
 
   if (lbd > ms->lbdLimit)
     return;
@@ -130,9 +118,8 @@ bool desatImportClause(void *issuer, std::vector<int> &mcls, int &sender)
   mcls.clear();
   mcls.resize(cls->size);
   for (int i = 0; i < cls->size; i++)
-  {
     mcls[i] = cls->lits[i];
-  }
+
   sender = cls->from;
   ClauseManager::releaseClause(cls);
   ms->imported_cls++;
@@ -149,13 +136,9 @@ DeSATSolver::DeSATSolver(int id, EnvBMC *env, bool seq_) : SolverInterface(id, D
                                                            env_bmc(env),
                                                            seq(seq_)
 {
-  sizeLimit = Parameters::getIntParam("lbd-limit", 4);
   lbdLimit = Parameters::getIntParam("lbd-limit", 4);
   lbdLimitItp = Parameters::getIntParam("lbd-limit-itp", 4);
-  memLimit = Parameters::getIntParam("max-memory", -1); // in Megabyte
-  n_partitions = env_bmc->nb_leafs;
-  if (seq)
-    n_partitions = 0;
+  n_partitions = seq ? 0 : env_bmc->nb_leafs;
 
   d = RANDOM;
   if (env->decompstrat == "bmc")
@@ -164,9 +147,9 @@ DeSATSolver::DeSATSolver(int id, EnvBMC *env, bool seq_) : SolverInterface(id, D
     d = BATCH;
 
   m = new ExpressionManager();
+
   string filename = Parameters::getFilename();
-  int supposed_n_partitions = env_bmc->nb_leafs;
-  std::string save_inteprolants_filename = filename + "_n" + std::to_string(supposed_n_partitions) + "_d" + env->decompstrat + ".txt";
+  std::string save_inteprolants_filename = filename + "_n" + std::to_string(n_partitions) + "_d" + env->decompstrat + ".txt";
 
   solver = new DeSAT(*m, n_partitions, d, Parameters::getIntParam("nc", 1), save_inteprolants_filename, env_bmc->nb_clauses);
   solver->setClauseMax(env_bmc->nb_clauses);
@@ -174,46 +157,16 @@ DeSATSolver::DeSATSolver(int id, EnvBMC *env, bool seq_) : SolverInterface(id, D
   solver->setInterpolator(MCMILLAN);
 
   // Share conflict clauses coming from globalSolver
-  // code_filter_confl = Parameters::getIntParam("shroot", -1);
   SATSolver *globalSolver = solver->getGlobalSolver();
   globalSolver->setIssuer(this);
 
+  // Enable gSolver (flat or DECOMP) to export its conflict clauses in a parallel context
   if (env_bmc->shrValue > 0 && (Parameters::isSet("shr-root") || seq))
-  {
-    globalSolver->setCallbackExportRoot(&desatExportRootClause);
-  }
-  if (env_bmc->shrValue > 0 && (Parameters::isSet("imp-root") || seq))
-  {
-    globalSolver->setCallbackImportClauses(&desatImportClause);
-  }
-  // string share_confl_root = Parameters::getParam("f", "N");
-  // if (share_confl_root == "A")
-  //   code_filter_itp = ALL;
-  // else if (share_confl_root == "N")
-  //   code_filter_itp = NO;
-  // else if (share_confl_root == "P")
-  //   code_filter_itp = P_ONLY;
-  // else if (share_confl_root == "M")
-  //   code_filter_itp = M_ONLY;
-  // else if (share_confl_root == "J")
-  //   code_filter_itp = J_ONLY;
-  // else if (share_confl_root == "PJ")
-  //   code_filter_itp = P_J;
-  // else if (share_confl_root == "PM")
-  //   code_filter_itp = P_M;
-  // else if (share_confl_root == "MJ")
-  //   code_filter_itp = M_J;
-  // else if (share_confl_root == "PMJ")
-  //   code_filter_itp = P_M_J;
-  // else
-  // {
-  //   code_filter_itp = ERR;
-  //   std::cerr << "ERROR in f parameter\n";
-  //   exit(1);
-  // }
+    globalSolver->setCallbackExportRoot(&desatExportgSolverClause);
 
-  // opf_itp.open(save_inteprolants_filename);
-  // prob_sharing = 0.05;
+  // Enable gSolver (flat or DECOMP) to import external clauses in a parallel context
+  if (env_bmc->shrValue > 0 && (Parameters::isSet("imp-root") || seq))
+    globalSolver->setCallbackImportClauses(&desatImportClause);
 }
 
 DeSATSolver::~DeSATSolver()
@@ -299,46 +252,7 @@ void DeSATSolver::diversify(int id)
 {
 }
 
-// bool DeSATSolver::selectConflitClause(std::vector<int> &clause_confl)
-// {
-//   bool send_to_other = false;
-//   std::unordered_set<signed> variable_confl;
-//   for (int v : clause_confl)
-//   {
-//     signed value = std::abs(v);
-//     variable_confl.insert(value);
-//   }
-
-//   ConstraintMode conversion_mode = TSEITIN_EXTENSION;
-//   send_to_other = FilterInterpolant(variable_confl, env_bmc, code_filter_confl, conversion_mode);
-//   return send_to_other;
-// }
-
-bool DeSATSolver::selectConflitClause_LBDI_OptimalConfig(std::vector<int> &clause_confl, int lbd)
-{
-  std::unordered_set<signed> variable_confl;
-  for (int v : clause_confl)
-  {
-    signed value = std::abs(v);
-    variable_confl.insert(value);
-  }
-  return true;
-  // return shareClauseLBDI_OptimalConfig1(clauseType(variable_confl, env_bmc), lbd);
-}
-
-bool DeSATSolver::selectInterpolant(int partition)
-{
-  bool send_to_other = false;
-  std::unordered_set<signed> variables_itp = solver->getInterpolantsVariables(partition);
-  ConstraintMode conversion_mode = TSEITIN_EXTENSION;
-  // send_to_other = FilterInterpolant(variables_itp, env_bmc, code_filter_itp, conversion_mode);
-  solver->setConstraintMode(conversion_mode);
-  // if (send_to_other)
-  // solver->printInterpolant(partition, opf_itp);
-  return send_to_other;
-}
-
-void DeSATSolver::preprocess()
+void DeSATSolver::update()
 {
   // std::cout << "c Solving with " << getVariablesCount() << " variables, "
   //           << getClausesCount() << " clauses and "
@@ -349,7 +263,6 @@ void DeSATSolver::preprocess()
 
   solver->showDistribution();
 
-  tracer << "PB " << id << " :: DESAT\n";
   std::cout << "c DeSAT ID (" << id << ")\n";
   assert(globalSolver);
 
@@ -361,17 +274,14 @@ void DeSATSolver::preprocess()
 // return 10 for SAT, 20 for UNSAT, 0 for UNKNOWN
 SatResult DeSATSolver::solve(const vector<int> &cube)
 {
-  // bool resultat = solver->solve();
-  // if (resultat == true)
-  //   return SAT;
-  // return UNSAT;
-
   SATSolver *globalSolver = solver->getGlobalSolver();
   clock_t before = clock();
   int all_sat = 0, exported_itp = 0;
   SatResult res = UNKNOWN;
   bool stop_first_unsat = false;
   std::vector<std::vector<int> > itp_clauses;
+
+  // Flat resolution
   if (seq && n_partitions == 0)
   {
     globalSolver->setVariableMax(env_bmc->nb_variables);
@@ -382,10 +292,10 @@ SatResult DeSATSolver::solve(const vector<int> &cube)
     return r ? SAT : UNSAT;
   }
 
-  if (!addInitialClausesToPartitions_())
+  if (!addInitialClausesToPartitions())
     return UNSAT;
 
-  preprocess();
+  update();
 
   while (res == UNKNOWN && !stopSolver)
   {
@@ -414,8 +324,6 @@ SatResult DeSATSolver::solve(const vector<int> &cube)
         // If partition is UNSAT
         else
         {
-          // bool send_to_other = selectInterpolant(i);
-
           if (!solver->importInterpolants(itp_clauses, i))
             res = SAT;
           if (env_bmc->log || env_bmc->log_itp_only)
@@ -428,10 +336,6 @@ SatResult DeSATSolver::solve(const vector<int> &cube)
             }
             env_bmc->logFile.flush();
           }
-          // // std::unordered_set<signed> variable_confl = solver->getInterpolantsVariables(i);
-          // // LogInterpolantsConflType(variable_confl, itp_clauses, env_bmc, 0, opf_itp);
-          // if (!send_to_other)
-          //   itp_clauses.clear();
           if (env_bmc->stop_first_unsat)
             stop_first_unsat = true;
           //&& env_bmc->stop_at_first_unsat;
@@ -491,7 +395,6 @@ void DeSATSolver::addClauses(const vector<ClauseExchange *> &clauses)
 bool DeSATSolver::addInitialClauses()
 {
   assert(n_partitions == 0 || seq);
-  // Partitions clauses
   for (int p = 0; p < env_bmc->nb_leafs; p++)
   {
     for (auto cls : env_bmc->clauses_partition[p])
@@ -503,7 +406,6 @@ bool DeSATSolver::addInitialClauses()
       }
     }
   }
-  // Root gSolver clauses
   for (size_t ind = 0; ind < env_bmc->clauses_g.size(); ind++)
   {
     if (solver->addClause(env_bmc->clauses_g[ind]) == false)
@@ -515,22 +417,50 @@ bool DeSATSolver::addInitialClauses()
   return true;
 }
 
-bool DeSATSolver::addInitialClausesToPartitions_()
+bool DeSATSolver::addInitialClausesToPartitions()
 {
-  // Partitions clauses
-  for (int p = 0; p < n_partitions; p++)
+  if (d == BMC)
   {
-    for (auto cls : env_bmc->clauses_partition[p])
+    // Initialize partitions
+    for (int p = 0; p < n_partitions; p++)
     {
-      if (d == BMC)
+      for (auto cls : env_bmc->clauses_partition[p])
       {
-        if (solver->addClause(cls, p) == false)
+        if (d == BMC)
         {
-          std::cout << "c unsat when adding initial cls to partition" << p << std::endl;
-          return false;
+          if (solver->addClause(cls, p) == false)
+          {
+            std::cout << "c unsat when adding initial cls to partition" << p << std::endl;
+            return false;
+          }
+        }
+        else if (d == BATCH || d == RANDOM)
+        {
+          if (solver->addClause(cls) == false)
+          {
+            std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
+            return false;
+          }
         }
       }
-      else if (d == BATCH || d == RANDOM)
+    }
+    // Initialize gSolver clauses
+    for (size_t ind = 0; ind < env_bmc->clauses_g.size(); ind++)
+    {
+      vector<signed> cls = env_bmc->clauses_g[ind];
+      if (solver->addClause(cls, -1) == false)
+      {
+        std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
+        return false;
+      }
+    }
+  }
+  if (d == BATCH || d == RANDOM)
+  {
+    // BATCH and RANDOM decomposition is managed by DeSAT
+    for (int p = 0; p < n_partitions; p++)
+    {
+      for (auto cls : env_bmc->clauses_partition[p])
       {
         if (solver->addClause(cls) == false)
         {
@@ -539,28 +469,10 @@ bool DeSATSolver::addInitialClausesToPartitions_()
         }
       }
     }
-  }
-  // Root gSolver clauses
-  for (size_t ind = 0; ind < env_bmc->clauses_g.size(); ind++)
-  {
-    vector<signed> cls = env_bmc->clauses_g[ind];
-    // for (size_t i = 0; i < clauses[id_root][ind]->size; i++)
-    // {
-    //   int lit = clauses[id_root][ind]->lits[i];
-    //   cls.emplace_back(lit);
-    // }
-    // N-ARY TREE WITH RANDOM DECOMPOSITION (HAMMADI's APPROACH)
-    if (d == BATCH || d == RANDOM)
+    for (size_t ind = 0; ind < env_bmc->clauses_g.size(); ind++)
     {
+      vector<signed> cls = env_bmc->clauses_g[ind];
       if (solver->addClause(cls) == false)
-      {
-        std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
-        return false;
-      }
-    }
-    else
-    {
-      if (solver->addClause(cls, -1) == false)
       {
         std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
         return false;
@@ -569,6 +481,56 @@ bool DeSATSolver::addInitialClausesToPartitions_()
   }
   return true;
 }
+
+// bool DeSATSolver::addInitialClausesToPartitions_()
+// {
+//   // Initialize partitions
+//   for (int p = 0; p < n_partitions; p++)
+//   {
+//     for (auto cls : env_bmc->clauses_partition[p])
+//     {
+//       if (d == BMC)
+//       {
+//         if (solver->addClause(cls, p) == false)
+//         {
+//           std::cout << "c unsat when adding initial cls to partition" << p << std::endl;
+//           return false;
+//         }
+//       }
+//       else if (d == BATCH || d == RANDOM)
+//       {
+//         if (solver->addClause(cls) == false)
+//         {
+//           std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
+//           return false;
+//         }
+//       }
+//     }
+//   }
+//   // Root gSolver clauses
+//   for (size_t ind = 0; ind < env_bmc->clauses_g.size(); ind++)
+//   {
+//     vector<signed> cls = env_bmc->clauses_g[ind];
+//     // N-ARY TREE WITH RANDOM DECOMPOSITION (HAMMADI's APPROACH)
+//     if (d == BATCH || d == RANDOM)
+//     {
+//       if (solver->addClause(cls) == false)
+//       {
+//         std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
+//         return false;
+//       }
+//     }
+//     else
+//     {
+//       if (solver->addClause(cls, -1) == false)
+//       {
+//         std::cout << "c unsat when adding initial cls to gSolver" << std::endl;
+//         return false;
+//       }
+//     }
+//   }
+//   return true;
+// }
 
 void DeSATSolver::addInitialClauses(const vector<ClauseExchange *> &clauses)
 {
@@ -590,14 +552,14 @@ void DeSATSolver::getLearnedClauses(vector<ClauseExchange *> &clauses)
 
 void DeSATSolver::increaseClauseProduction()
 {
-  sizeLimit++;
+  lbdLimit++;
 }
 
 void DeSATSolver::decreaseClauseProduction()
 {
-  if (sizeLimit > 2)
+  if (lbdLimit > 2)
   {
-    sizeLimit--;
+    lbdLimit--;
   }
 }
 

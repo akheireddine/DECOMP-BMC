@@ -18,14 +18,12 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 LIBS = -lminisat -L../minisat/build/release/lib/                 \
-       -lglucose -L../glucose/parallel                           \
-       -llgl -L../lingeling/                                     \
        -lmapleCOMSPS -L../mapleCOMSPS/build/release/lib/         \
        -ldesat -L../desat/lib/					 \
        -lpthread -lz -lm -lgmpxx -L/opt/local/lib/ -lgmp -fopenmp
 
-CXXFLAGS = -I../minisat -I../glucose -I../lingeling              \
-           -I../mapleCOMSPS          			           \
+CXXFLAGS = -I../minisat 			                 \
+           -I../mapleCOMSPS          		                 \
            -I../desat/Desat -I../desat/Desat/libExpression	 \
            $(INCLUDES) -DPRODUCE_PROOF                           \
            -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS        \

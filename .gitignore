@@ -4,7 +4,7 @@
 *.o
 *~
 *.a
-bmc-decomp
+decomp-bmc
 .DS_Store
 .vscode/
 .so
@@ -47,6 +47,11 @@ mapleCOMSPS/build/*
 *.a
 ./lib
 
+# NuSMV
+#######
+NuSMV-2.6.0/NuSMV/build/
+NuSMV-2.6.0/NuSMV/lib/
+NuSMV-2.6.0/scripts/html2text.pyc
 
 # DeSAT crated files #
 #############################

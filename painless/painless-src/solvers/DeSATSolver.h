@@ -27,11 +27,9 @@
 #include "libDeSAT/desat.h"
 #include "libDeSAT/decomposition_mode.h"
 
-
 using namespace std;
 
 using namespace Desat;
-
 
 /// Instance of a DeSAT solver
 class DeSATSolver : public SolverInterface
@@ -77,7 +75,8 @@ public:
 
    bool addInitialClauses();
 
-   bool addInitialClausesToPartitions_();
+   // Clause distribution between partitions
+   bool addInitialClausesToPartitions();
 
    /// Add a learned clause to the formula.
    void addLearnedClause(ClauseExchange *clause);
@@ -106,27 +105,19 @@ public:
    /// Filter Interpolants to be shared
    bool selectInterpolant(int partition);
 
-   bool selectConflitClause(std::vector<int> &clause_confl);
-
-   bool selectConflitClause_LBDI_OptimalConfig(std::vector<int> &clause_confl, int lbd);
-
    /// Constructor.
-   DeSATSolver(int id, EnvBMC *env, bool seq=false);
+   DeSATSolver(int id, EnvBMC *env, bool seq = false);
 
    /// Destructor.
    virtual ~DeSATSolver();
 
-   vector<vector<int>> getFinalAnalysis() { return {}; };
+   vector<vector<int> > getFinalAnalysis() { return {}; };
 
-   bool emptyDataClause() { return true; };
+   bool emptyDataClause() { return env_bmc->nb_clauses <= 0; };
 
    bool importClauses();
 
-   bool to_share();
-
-   void update_parameter();
-
-   void preprocess();
+   void update();
 
 protected:
    /// Pointer to a Maple solver.
@@ -143,37 +134,25 @@ protected:
    int imported_cls;
    int exported_confl_cls;
 
+   // disable partitioning (flat resolution)
    bool seq;
-
-   int maj_prob;
-   float prob_sharing;
-
-   //ITP_FILTER code_filter_itp;
-   int code_filter_confl;
 
    /// Buffer used to import clauses (units included).
    ClauseBuffer clausesToImport;
+   // TODO! import unit clauses if enabled for gSolver
    ClauseBuffer unitsToImport;
 
    /// Buffer used to export clauses (units included).
    ClauseBuffer clausesToExport;
 
-   /// Buffer used to add permanent clauses.
-   ClauseBuffer clausesToAdd;
-
-   /// Size limit used to share clauses.
-   atomic<int> sizeLimit;
-
    /// Size limit used to share clauses.
    atomic<int> lbdLimit, lbdLimitItp;
-
-   atomic<int> memLimit;
 
    /// Used to stop or continue the resolution.
    atomic<bool> stopSolver;
 
    /// Callback to export clauses.
    friend void desatExportPartitionClause(void *, std::vector<int> &);
-   friend void desatExportRootClause(void *, int, std::vector<int> &);
+   friend void desatExportgSolverClause(void *, int, std::vector<int> &);
    friend bool desatImportClause(void *, std::vector<int> &, int &);
 };

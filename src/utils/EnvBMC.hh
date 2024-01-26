@@ -19,12 +19,14 @@ class EnvBMC
 public:
   EnvBMC()
   {
+    mode = Parameters::getParam("mode", "p");
     decompstrat = Parameters::getParam("decomp", "batch");
     cpus = Parameters::getIntParam("c", 1); // std::thread::hardware_concurrency());
     timeout = Parameters::getIntParam("t", -1);
     memory = Parameters::getIntParam("max-memory", -1) * 1024 * 1024;
-    k =  0;
-    solver_type = Parameters::getParam("s", "desat");
+    k = Parameters::getIntParam("k", 1);
+    solver_type = Parameters::getParam("s", "minisat");
+    convertor = Parameters::getIntParam("conv", 1);
     nb_leafs = Parameters::getIntParam("nleafs", 0);
     nb_grp_steps = Parameters::getIntParam("nsteps", 0);
     nb_clauses = 0, nb_variables = 0;
@@ -38,14 +40,15 @@ public:
 
   ~EnvBMC() {}
 
-  /**************************** BSaLTic main parameters ****************************/
+  /**************************** DECOMP-BMC main parameters ****************************/
   std::unordered_set<std::string> ltl_varnames;
   std::vector<VB> info_variables;
-  std::vector<int> rename_loop;
   std::vector<int> rename_step;
   std::vector<std::vector<std::vector<int> > > clauses_partition;
   std::vector<std::vector<int> > clauses_g;
   int idmax_model;
+
+  std::string mode;
 
   int nb_clauses, nb_variables;
   std::string decompstrat;
@@ -55,6 +58,7 @@ public:
   std::ofstream logFile;
   int cpus;
   int timeout;
+  int convertor;
   int memory;
   int k;
   int nb_leafs, nb_grp_steps;

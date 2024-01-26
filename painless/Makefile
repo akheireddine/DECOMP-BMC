@@ -10,7 +10,7 @@ endif
 ##################################################
 ###                PaInleSS                    ###
 ##################################################
-all: build-minisat build-glucose build-lingeling build-maplecomsps build-desat 
+all: build-minisat build-maplecomsps build-desat 
 	+ cd painless-src 						&& \
 	make release							&& \
 	mv painless ../painless
@@ -20,20 +20,6 @@ all: build-minisat build-glucose build-lingeling build-maplecomsps build-desat
 ##################################################
 build-minisat:
 	+ $(MAKE) -C minisat
-
-##################################################
-###                Glucose                     ###
-##################################################
-build-glucose:
-	+ $(MAKE) -C glucose
-
-##################################################
-###                Lingeling                   ###
-##################################################
-build-lingeling:
-	@if [ -f lingeling/makefile ]; then : ; \
-	else cd lingeling && ./configure.sh; fi
-	+ $(MAKE) liblgl.a -C lingeling
 
 ##################################################
 ###                MapleCOMSPS                 ###
@@ -57,8 +43,6 @@ docs:
 
 clean:
 	+ $(MAKE) -C minisat clean
-	+ $(MAKE) -C glucose clean
-	@if [ -f lingeling/makefile ]; then :; $(MAKE) -C lingeling clean; fi
 	+ $(MAKE) -C mapleCOMSPS clean
 	+ $(MAKE) -C desat clean
 	+ $(MAKE) clean -C painless-src

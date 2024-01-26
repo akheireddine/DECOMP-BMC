@@ -33,12 +33,7 @@ using namespace std;
 
 
 
-// #define TRACER
-#ifdef TRACER
-#define tracer std::cout
-#else
-#define tracer while (0) std::cout
-#endif
+
 
 
 /// Print array of a given length.

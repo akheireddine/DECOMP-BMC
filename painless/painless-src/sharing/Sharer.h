@@ -24,7 +24,7 @@
 
 extern atomic<bool> globalEnding;
 
-static void * mainThrSharing(void * arg);
+void * mainThrSharing(void * arg);
 
 
 /// A sharer is a thread responsible to share clauses between solvers.
@@ -50,8 +50,6 @@ public:
 
    /// Remove a solver from the consumers.
    void removeConsumer(SolverInterface * solver);
-
-   void printStats();
 
 protected:
    friend void * mainThrSharing(void *);

@@ -1,0 +1,590 @@
+MODULE main
+  VAR
+    link_0_in : process Ch_1_int;
+    link_0_out : process Ch_1_int;
+    link_1_in : process Ch_1_int;
+    link_1_out : process Ch_1_int;
+    link_2_in : process Ch_1_int;
+    link_2_out : process Ch_1_int;
+    p_P_0 : process P_0(self);
+    p_P_1 : process P_1(self);
+    p_P_2 : process P_2(self);
+    p_chnlnel_link_0 : process chnlnel_link_0(self);
+    p_chnlnel_link_1 : process chnlnel_link_1(self);
+    p_chnlnel_link_2 : process chnlnel_link_2(self);
+  TRANS
+    !running
+
+MODULE Ch_1_int
+  VAR
+    ele1 : array 0..0 of signed word[32];
+    point : -1..0;
+  ASSIGN
+    init(ele1[0]) := swconst(0, 32);
+    init(point) := 0;
+  TRANS
+    !running
+
+MODULE P_0(sup)
+  VAR
+    status : signed word[32];
+    v : signed word[32];
+    pc : 1..35;
+  ASSIGN
+    init(status) := swconst(0, 32);
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_1_in.ele1[0]) := 
+            case
+               pc = 2 & sup.link_1_in.point = 0 : swconst(255,32);
+               pc = 10 & sup.link_1_in.point = 0 : swconst(24,32);
+               pc = 18 & sup.link_1_in.point = 0 : v;
+               pc = 22 & sup.link_1_in.point = 0 : v;
+               pc = 27 & sup.link_1_in.point = 0 : v;
+               TRUE   : sup.link_1_in.ele1[0];
+            esac;
+    next(sup.link_1_in.point) := 
+            case
+               pc = 2 & sup.link_1_in.point >= 0 : sup.link_1_in.point - 1;
+               pc = 10 & sup.link_1_in.point >= 0 : sup.link_1_in.point - 1;
+               pc = 18 & sup.link_1_in.point >= 0 : sup.link_1_in.point - 1;
+               pc = 22 & sup.link_1_in.point >= 0 : sup.link_1_in.point - 1;
+               pc = 27 & sup.link_1_in.point >= 0 : sup.link_1_in.point - 1;
+               TRUE   : sup.link_1_in.point;
+            esac;
+    next(status) := 
+            case
+               pc = 4 : swconst(0,32);
+               pc = 12 : swconst(1,32);
+               pc = 24 : swconst(2,32);
+               pc = 31 : swconst(0,32);
+               TRUE   : status;
+            esac;
+    next(sup.link_0_out.ele1[0]) := 
+            case
+               pc = 7 & sup.link_0_out.point < 0 : swconst(0,32);
+               TRUE   : sup.link_0_out.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 7 & sup.link_0_out.point < 0 : sup.link_0_out.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_0_out.point) := 
+            case
+               pc = 7 & sup.link_0_out.point < 0 : sup.link_0_out.point + 1;
+               TRUE   : sup.link_0_out.point;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_1_in.point >= 0 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.link_1_in.point = 0 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.link_0_out.point < 0 & next(pc) = 7
+             | pc = 6 & status = swconst(0,32) & next(pc) = 9
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 14
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.link_1_in.point >= 0 & next(pc) = 11
+             | pc = 11 & sup.link_1_in.point = 0 & next(pc) = 12
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 6
+             | pc = 14 & v = swconst(255,32) & next(pc) = 15
+             | pc = 14 & v != swconst(255,32) & v > swconst(24,32) & next(pc) = 17
+             | pc = 14 & v != swconst(255,32) & status = swconst(1,32) & v < swconst(24,32) & next(pc) = 21
+             | pc = 14 & v != swconst(255,32) & status = swconst(0,32) & v < swconst(24,32) & next(pc) = 26
+             | pc = 14 & v != swconst(255,32) & v = swconst(24,32) & status != swconst(1,32) & next(pc) = 30
+             | pc = 14 & v != swconst(255,32) & v = swconst(24,32) & status = swconst(1,32) & next(pc) = 33
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 1
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & sup.link_1_in.point >= 0 & next(pc) = 19
+             | pc = 19 & sup.link_1_in.point = 0 & next(pc) = 20
+             | pc = 20 & next(pc) = 6
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & sup.link_1_in.point >= 0 & next(pc) = 23
+             | pc = 23 & sup.link_1_in.point = 0 & next(pc) = 24
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 6
+             | pc = 26 & next(pc) = 27
+             | pc = 27 & sup.link_1_in.point >= 0 & next(pc) = 28
+             | pc = 28 & sup.link_1_in.point = 0 & next(pc) = 29
+             | pc = 29 & next(pc) = 6
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & next(pc) = 32
+             | pc = 32 & next(pc) = 6
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.link_1_in.point = 0
+      | pc = 4
+      | pc = 7
+      | pc = 9
+      | pc = 10 & sup.link_1_in.point >= 0
+      | pc = 11 & sup.link_1_in.point = 0
+      | pc = 12
+      | pc = 15
+      | pc = 17
+      | pc = 18 & sup.link_1_in.point >= 0
+      | pc = 19 & sup.link_1_in.point = 0
+      | pc = 21
+      | pc = 22 & sup.link_1_in.point >= 0
+      | pc = 23 & sup.link_1_in.point = 0
+      | pc = 24
+      | pc = 26
+      | pc = 27 & sup.link_1_in.point >= 0
+      | pc = 28 & sup.link_1_in.point = 0
+      | pc = 30
+      | pc = 31
+      | pc = 33
+       -> running )
+    & ( pc = 1 & sup.link_1_in.point < 0
+      | pc = 3 & sup.link_1_in.point != 0
+      | pc = 6 & !(status = swconst(0,32) | sup.link_0_out.point < 0)
+      | pc = 10 & sup.link_1_in.point < 0
+      | pc = 11 & sup.link_1_in.point != 0
+      | pc = 14 & !(v != swconst(255,32) & v = swconst(24,32) & status = swconst(1,32) | v != swconst(255,32) & v = swconst(24,32) & status != swconst(1,32) | v != swconst(255,32) & status = swconst(0,32) & v < swconst(24,32) | v != swconst(255,32) & status = swconst(1,32) & v < swconst(24,32) | v != swconst(255,32) & v > swconst(24,32) | v = swconst(255,32))
+      | pc = 18 & sup.link_1_in.point < 0
+      | pc = 19 & sup.link_1_in.point != 0
+      | pc = 22 & sup.link_1_in.point < 0
+      | pc = 23 & sup.link_1_in.point != 0
+      | pc = 27 & sup.link_1_in.point < 0
+      | pc = 28 & sup.link_1_in.point != 0
+      | pc = 35
+       -> !running )
+
+
+MODULE P_1(sup)
+  VAR
+    status : signed word[32];
+    v : signed word[32];
+    pc : 1..35;
+  ASSIGN
+    init(status) := swconst(0, 32);
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_1_out.ele1[0]) := 
+            case
+               pc = 2 & sup.link_1_out.point < 0 : swconst(0,32);
+               TRUE   : sup.link_1_out.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 2 & sup.link_1_out.point < 0 : sup.link_1_out.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_1_out.point) := 
+            case
+               pc = 2 & sup.link_1_out.point < 0 : sup.link_1_out.point + 1;
+               TRUE   : sup.link_1_out.point;
+            esac;
+    next(sup.link_2_in.ele1[0]) := 
+            case
+               pc = 5 & sup.link_2_in.point = 0 : swconst(14,32);
+               pc = 10 & sup.link_2_in.point = 0 : swconst(255,32);
+               pc = 18 & sup.link_2_in.point = 0 : v;
+               pc = 22 & sup.link_2_in.point = 0 : v;
+               pc = 27 & sup.link_2_in.point = 0 : v;
+               TRUE   : sup.link_2_in.ele1[0];
+            esac;
+    next(sup.link_2_in.point) := 
+            case
+               pc = 5 & sup.link_2_in.point >= 0 : sup.link_2_in.point - 1;
+               pc = 10 & sup.link_2_in.point >= 0 : sup.link_2_in.point - 1;
+               pc = 18 & sup.link_2_in.point >= 0 : sup.link_2_in.point - 1;
+               pc = 22 & sup.link_2_in.point >= 0 : sup.link_2_in.point - 1;
+               pc = 27 & sup.link_2_in.point >= 0 : sup.link_2_in.point - 1;
+               TRUE   : sup.link_2_in.point;
+            esac;
+    next(status) := 
+            case
+               pc = 7 : swconst(1,32);
+               pc = 12 : swconst(0,32);
+               pc = 24 : swconst(2,32);
+               pc = 31 : swconst(0,32);
+               TRUE   : status;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_1_out.point < 0 & next(pc) = 2
+             | pc = 1 & status = swconst(0,32) & next(pc) = 4
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 14
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.link_2_in.point >= 0 & next(pc) = 6
+             | pc = 6 & sup.link_2_in.point = 0 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 1
+             | pc = 9 & sup.link_2_in.point >= 0 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & sup.link_2_in.point = 0 & next(pc) = 12
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 1
+             | pc = 14 & v = swconst(255,32) & next(pc) = 15
+             | pc = 14 & v != swconst(255,32) & v > swconst(14,32) & next(pc) = 17
+             | pc = 14 & v != swconst(255,32) & status = swconst(1,32) & v < swconst(14,32) & next(pc) = 21
+             | pc = 14 & v != swconst(255,32) & status = swconst(0,32) & v < swconst(14,32) & next(pc) = 26
+             | pc = 14 & v != swconst(255,32) & v = swconst(14,32) & status != swconst(1,32) & next(pc) = 30
+             | pc = 14 & v != swconst(255,32) & v = swconst(14,32) & status = swconst(1,32) & next(pc) = 33
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 9
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & sup.link_2_in.point >= 0 & next(pc) = 19
+             | pc = 19 & sup.link_2_in.point = 0 & next(pc) = 20
+             | pc = 20 & next(pc) = 1
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & sup.link_2_in.point >= 0 & next(pc) = 23
+             | pc = 23 & sup.link_2_in.point = 0 & next(pc) = 24
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 1
+             | pc = 26 & next(pc) = 27
+             | pc = 27 & sup.link_2_in.point >= 0 & next(pc) = 28
+             | pc = 28 & sup.link_2_in.point = 0 & next(pc) = 29
+             | pc = 29 & next(pc) = 1
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & next(pc) = 32
+             | pc = 32 & next(pc) = 1
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 9
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 4
+      | pc = 5 & sup.link_2_in.point >= 0
+      | pc = 6 & sup.link_2_in.point = 0
+      | pc = 7
+      | pc = 10
+      | pc = 11 & sup.link_2_in.point = 0
+      | pc = 12
+      | pc = 15
+      | pc = 17
+      | pc = 18 & sup.link_2_in.point >= 0
+      | pc = 19 & sup.link_2_in.point = 0
+      | pc = 21
+      | pc = 22 & sup.link_2_in.point >= 0
+      | pc = 23 & sup.link_2_in.point = 0
+      | pc = 24
+      | pc = 26
+      | pc = 27 & sup.link_2_in.point >= 0
+      | pc = 28 & sup.link_2_in.point = 0
+      | pc = 30
+      | pc = 31
+      | pc = 33
+       -> running )
+    & ( pc = 1 & !(status = swconst(0,32) | sup.link_1_out.point < 0)
+      | pc = 5 & sup.link_2_in.point < 0
+      | pc = 6 & sup.link_2_in.point != 0
+      | pc = 9 & sup.link_2_in.point < 0
+      | pc = 11 & sup.link_2_in.point != 0
+      | pc = 14 & !(v != swconst(255,32) & v = swconst(14,32) & status = swconst(1,32) | v != swconst(255,32) & v = swconst(14,32) & status != swconst(1,32) | v != swconst(255,32) & status = swconst(0,32) & v < swconst(14,32) | v != swconst(255,32) & status = swconst(1,32) & v < swconst(14,32) | v != swconst(255,32) & v > swconst(14,32) | v = swconst(255,32))
+      | pc = 18 & sup.link_2_in.point < 0
+      | pc = 19 & sup.link_2_in.point != 0
+      | pc = 22 & sup.link_2_in.point < 0
+      | pc = 23 & sup.link_2_in.point != 0
+      | pc = 27 & sup.link_2_in.point < 0
+      | pc = 28 & sup.link_2_in.point != 0
+      | pc = 35
+       -> !running )
+
+
+MODULE P_2(sup)
+  VAR
+    status : signed word[32];
+    v : signed word[32];
+    pc : 1..35;
+  ASSIGN
+    init(status) := swconst(0, 32);
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_2_out.ele1[0]) := 
+            case
+               pc = 2 & sup.link_2_out.point < 0 : swconst(0,32);
+               TRUE   : sup.link_2_out.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 2 & sup.link_2_out.point < 0 : sup.link_2_out.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_2_out.point) := 
+            case
+               pc = 2 & sup.link_2_out.point < 0 : sup.link_2_out.point + 1;
+               TRUE   : sup.link_2_out.point;
+            esac;
+    next(sup.link_0_in.ele1[0]) := 
+            case
+               pc = 5 & sup.link_0_in.point = 0 : swconst(6,32);
+               pc = 10 & sup.link_0_in.point = 0 : swconst(255,32);
+               pc = 18 & sup.link_0_in.point = 0 : v;
+               pc = 22 & sup.link_0_in.point = 0 : v;
+               pc = 27 & sup.link_0_in.point = 0 : v;
+               TRUE   : sup.link_0_in.ele1[0];
+            esac;
+    next(sup.link_0_in.point) := 
+            case
+               pc = 5 & sup.link_0_in.point >= 0 : sup.link_0_in.point - 1;
+               pc = 10 & sup.link_0_in.point >= 0 : sup.link_0_in.point - 1;
+               pc = 18 & sup.link_0_in.point >= 0 : sup.link_0_in.point - 1;
+               pc = 22 & sup.link_0_in.point >= 0 : sup.link_0_in.point - 1;
+               pc = 27 & sup.link_0_in.point >= 0 : sup.link_0_in.point - 1;
+               TRUE   : sup.link_0_in.point;
+            esac;
+    next(status) := 
+            case
+               pc = 7 : swconst(1,32);
+               pc = 12 : swconst(0,32);
+               pc = 24 : swconst(2,32);
+               pc = 31 : swconst(0,32);
+               TRUE   : status;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_2_out.point < 0 & next(pc) = 2
+             | pc = 1 & status = swconst(0,32) & next(pc) = 4
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 14
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.link_0_in.point >= 0 & next(pc) = 6
+             | pc = 6 & sup.link_0_in.point = 0 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 1
+             | pc = 9 & sup.link_0_in.point >= 0 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & sup.link_0_in.point = 0 & next(pc) = 12
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 1
+             | pc = 14 & v = swconst(255,32) & next(pc) = 15
+             | pc = 14 & v != swconst(255,32) & v > swconst(6,32) & next(pc) = 17
+             | pc = 14 & v != swconst(255,32) & status = swconst(1,32) & v < swconst(6,32) & next(pc) = 21
+             | pc = 14 & v != swconst(255,32) & status = swconst(0,32) & v < swconst(6,32) & next(pc) = 26
+             | pc = 14 & v != swconst(255,32) & v = swconst(6,32) & status != swconst(1,32) & next(pc) = 30
+             | pc = 14 & v != swconst(255,32) & v = swconst(6,32) & status = swconst(1,32) & next(pc) = 33
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 9
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & sup.link_0_in.point >= 0 & next(pc) = 19
+             | pc = 19 & sup.link_0_in.point = 0 & next(pc) = 20
+             | pc = 20 & next(pc) = 1
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & sup.link_0_in.point >= 0 & next(pc) = 23
+             | pc = 23 & sup.link_0_in.point = 0 & next(pc) = 24
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 1
+             | pc = 26 & next(pc) = 27
+             | pc = 27 & sup.link_0_in.point >= 0 & next(pc) = 28
+             | pc = 28 & sup.link_0_in.point = 0 & next(pc) = 29
+             | pc = 29 & next(pc) = 1
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & next(pc) = 32
+             | pc = 32 & next(pc) = 1
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 9
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 4
+      | pc = 5 & sup.link_0_in.point >= 0
+      | pc = 6 & sup.link_0_in.point = 0
+      | pc = 7
+      | pc = 10
+      | pc = 11 & sup.link_0_in.point = 0
+      | pc = 12
+      | pc = 15
+      | pc = 17
+      | pc = 18 & sup.link_0_in.point >= 0
+      | pc = 19 & sup.link_0_in.point = 0
+      | pc = 21
+      | pc = 22 & sup.link_0_in.point >= 0
+      | pc = 23 & sup.link_0_in.point = 0
+      | pc = 24
+      | pc = 26
+      | pc = 27 & sup.link_0_in.point >= 0
+      | pc = 28 & sup.link_0_in.point = 0
+      | pc = 30
+      | pc = 31
+      | pc = 33
+       -> running )
+    & ( pc = 1 & !(status = swconst(0,32) | sup.link_2_out.point < 0)
+      | pc = 5 & sup.link_0_in.point < 0
+      | pc = 6 & sup.link_0_in.point != 0
+      | pc = 9 & sup.link_0_in.point < 0
+      | pc = 11 & sup.link_0_in.point != 0
+      | pc = 14 & !(v != swconst(255,32) & v = swconst(6,32) & status = swconst(1,32) | v != swconst(255,32) & v = swconst(6,32) & status != swconst(1,32) | v != swconst(255,32) & status = swconst(0,32) & v < swconst(6,32) | v != swconst(255,32) & status = swconst(1,32) & v < swconst(6,32) | v != swconst(255,32) & v > swconst(6,32) | v = swconst(255,32))
+      | pc = 18 & sup.link_0_in.point < 0
+      | pc = 19 & sup.link_0_in.point != 0
+      | pc = 22 & sup.link_0_in.point < 0
+      | pc = 23 & sup.link_0_in.point != 0
+      | pc = 27 & sup.link_0_in.point < 0
+      | pc = 28 & sup.link_0_in.point != 0
+      | pc = 35
+       -> !running )
+
+
+MODULE chnlnel_link_0(sup)
+  VAR
+    v : signed word[32];
+    pc : 1..8;
+  ASSIGN
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_0_in.ele1[0]) := 
+            case
+               pc = 2 & sup.link_0_in.point < 0 : swconst(0,32);
+               TRUE   : sup.link_0_in.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 2 & sup.link_0_in.point < 0 : sup.link_0_in.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_0_in.point) := 
+            case
+               pc = 2 & sup.link_0_in.point < 0 : sup.link_0_in.point + 1;
+               TRUE   : sup.link_0_in.point;
+            esac;
+    next(sup.link_0_out.ele1[0]) := 
+            case
+               pc = 5 & sup.link_0_out.point = 0 : v;
+               TRUE   : sup.link_0_out.ele1[0];
+            esac;
+    next(sup.link_0_out.point) := 
+            case
+               pc = 5 & sup.link_0_out.point >= 0 : sup.link_0_out.point - 1;
+               TRUE   : sup.link_0_out.point;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_0_in.point < 0 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & sup.link_0_out.point >= 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.link_0_out.point = 0 & next(pc) = 7
+             | pc = 7 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 5
+      | pc = 6 & sup.link_0_out.point = 0
+       -> running )
+    & ( pc = 1 & sup.link_0_in.point >= 0
+      | pc = 4 & sup.link_0_out.point < 0
+      | pc = 6 & sup.link_0_out.point != 0
+      | pc = 8
+       -> !running )
+
+
+MODULE chnlnel_link_1(sup)
+  VAR
+    v : signed word[32];
+    pc : 1..8;
+  ASSIGN
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_1_in.ele1[0]) := 
+            case
+               pc = 2 & sup.link_1_in.point < 0 : swconst(0,32);
+               TRUE   : sup.link_1_in.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 2 & sup.link_1_in.point < 0 : sup.link_1_in.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_1_in.point) := 
+            case
+               pc = 2 & sup.link_1_in.point < 0 : sup.link_1_in.point + 1;
+               TRUE   : sup.link_1_in.point;
+            esac;
+    next(sup.link_1_out.ele1[0]) := 
+            case
+               pc = 5 & sup.link_1_out.point = 0 : v;
+               TRUE   : sup.link_1_out.ele1[0];
+            esac;
+    next(sup.link_1_out.point) := 
+            case
+               pc = 5 & sup.link_1_out.point >= 0 : sup.link_1_out.point - 1;
+               TRUE   : sup.link_1_out.point;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_1_in.point < 0 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & sup.link_1_out.point >= 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.link_1_out.point = 0 & next(pc) = 7
+             | pc = 7 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 5
+      | pc = 6 & sup.link_1_out.point = 0
+       -> running )
+    & ( pc = 1 & sup.link_1_in.point >= 0
+      | pc = 4 & sup.link_1_out.point < 0
+      | pc = 6 & sup.link_1_out.point != 0
+      | pc = 8
+       -> !running )
+
+
+MODULE chnlnel_link_2(sup)
+  VAR
+    v : signed word[32];
+    pc : 1..8;
+  ASSIGN
+    init(v) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.link_2_in.ele1[0]) := 
+            case
+               pc = 2 & sup.link_2_in.point < 0 : swconst(0,32);
+               TRUE   : sup.link_2_in.ele1[0];
+            esac;
+    next(v) := 
+            case
+               pc = 2 & sup.link_2_in.point < 0 : sup.link_2_in.ele1[0];
+               TRUE   : v;
+            esac;
+    next(sup.link_2_in.point) := 
+            case
+               pc = 2 & sup.link_2_in.point < 0 : sup.link_2_in.point + 1;
+               TRUE   : sup.link_2_in.point;
+            esac;
+    next(sup.link_2_out.ele1[0]) := 
+            case
+               pc = 5 & sup.link_2_out.point = 0 : v;
+               TRUE   : sup.link_2_out.ele1[0];
+            esac;
+    next(sup.link_2_out.point) := 
+            case
+               pc = 5 & sup.link_2_out.point >= 0 : sup.link_2_out.point - 1;
+               TRUE   : sup.link_2_out.point;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.link_2_in.point < 0 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & sup.link_2_out.point >= 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.link_2_out.point = 0 & next(pc) = 7
+             | pc = 7 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 5
+      | pc = 6 & sup.link_2_out.point = 0
+       -> running )
+    & ( pc = 1 & sup.link_2_in.point >= 0
+      | pc = 4 & sup.link_2_out.point < 0
+      | pc = 6 & sup.link_2_out.point != 0
+      | pc = 8
+       -> !running )
+
+
+LTLSPEC ! G F ( (sup.link_1_in.point != 255) & (sup.p_P_0.status = swconst(0,32) ))
+

@@ -19,19 +19,8 @@
 
 #pragma once
 
-#include "sharing/Sharer.h"
-#include "solvers/SolverInterface.h"
-#include "working/WorkingStrategy.h"
-#include "../../src/utils/Thread_Pool.hh"
+
 #include "../../src/utils/EnvBMC.hh"
-
-#include <atomic>
-#include <vector>
-
-using namespace std;
-
-extern WorkingStrategy * working;
-extern thread_pool * pool_thread;
 
 
 void run_painless_strategyDeSAT(EnvBMC *env_bmc);

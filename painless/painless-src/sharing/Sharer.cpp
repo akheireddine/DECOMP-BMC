@@ -30,7 +30,7 @@
 /// This is main of sharer threads.
 /// @param  arg contains a pointeur to the associated class
 /// @return return NULL if the thread exit correctly
-static void * mainThrSharing(void * arg)
+void * mainThrSharing(void * arg)
 {
    Sharer * shr  = (Sharer *)arg;
    int round     = 0;
@@ -93,6 +93,7 @@ static void * mainThrSharing(void * arg)
 
       shr->removeLock.unlock();
 
+
       if (globalEnding)
          break; // Need to stop
    }
@@ -123,13 +124,6 @@ Sharer::Sharer(int id, SharingStrategy * sharingStrategy,
    }
 
    sharer  = new Thread(mainThrSharing, this);
-}
-
-void Sharer::printStats(){
-   SharingStatistics stats = sharingStrategy->getStatistics();
-
-   log(0,"Sharer %d: received cls %ld, shared cls %ld\n", id,
-         stats.receivedClauses, stats.sharedClauses);
 }
 
 Sharer::~Sharer()

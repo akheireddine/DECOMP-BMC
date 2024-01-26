@@ -22,7 +22,6 @@
 #include "../clauses/ClauseExchange.h"
 #include "../utils/DebugUtils.h"
 #include "../utils/Parameters.h"
-// #include "../../../src/utils/StatsBMC.hh"
 
 
 #include <stdlib.h>
@@ -50,8 +49,6 @@ enum SolverType
 	LINGELING = 1,
 	MAPLE     = 2,
 	MINISAT   = 3,
-   PERIPLO   = 4,
-   HAMMADI   = 5,
    DESAT     = 6
 };
 
@@ -154,14 +151,12 @@ public:
       id    = solverId;
       type  = solverType;
       nRefs = 1;
-      //statistics_bmc = new StatsBMC(Parameters::getIntParam("k",-1) + 1);
       nClauses = 0;
    }
 
    /// Destructor.
    virtual ~SolverInterface()
    {
-      //delete statistics_bmc;
    }
 
    /// Increase the counter of references of this solver.
@@ -185,20 +180,6 @@ public:
       return nClauses;
    }
 
-   void printHeader(ofstream& opf)
-   {
-      opf << "Node,";
-      opf << "Time,";
-      opf << "Iteration,";
-      opf << "DecisionVars,";
-      opf << "NClausesBeforeSolve,";
-      opf << "NClausesAfterSolve,";
-      opf << "NReceived/NSended ITP,";
-      opf << "NLearntClauses,";
-      opf << "AVGLength ITP,";
-      opf << "NNewFreshVars" << std::endl;
-   }
-
    /// Id of this solver.
    int id;
 
@@ -208,12 +189,7 @@ public:
    /// Number of references pointing on this solver.
    atomic<int> nRefs;
 
-   //std::unordered_set< int > my_vars_set;
-
    vector< bool > vars_bool;
 
    int nClauses;
-
-   //StatsBMC * statistics_bmc;
-
 };

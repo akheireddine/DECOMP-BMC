@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "../solvers/GlucoseSyrup.h"
-#include "../solvers/Lingeling.h"
 #include "../solvers/Maple.h"
 #include "../solvers/MiniSat.h"
 #include "../solvers/DeSATSolver.h"
@@ -40,9 +38,6 @@ public:
    /// Instantiate and return a Minisat solver.
    static SolverInterface * createMiniSatSolver();
 
-   /// Instantiate and return a Glucose solver.
-   static SolverInterface * createGlucoseSolver();
-
    /// Instantiate and return a Maple solver.
    static SolverInterface * createMapleSolver();
                      
@@ -51,31 +46,14 @@ public:
    /// Instantiate and return a group of Maple solvers.
    static void createDeSATSolvers(int groupSize, EnvBMC* env_bmc,
                                   vector<SolverInterface *> & solvers);
-   /// Instantiate and return a Lingeling solver.
-   static SolverInterface * createLingelingSolver();
 
    /// Instantiate and return a group of Minisat solvers.
    static void createMiniSatSolvers(int groupSize,
                                     vector<SolverInterface *> & solvers);
 
-   /// Instantiate and return a group of Glucose solvers.
-   static void createGlucoseSolvers(int groupeSize,
-                                    vector<SolverInterface *> & solvers);
-
-   /// Instantiate and return a group of Lingeling solvers.
-   static void createLingelingSolvers(int groupeSize,
-                                      vector<SolverInterface *> & solvers);
-
    /// Instantiate and return a group of Maple solvers.
    static void createMapleSolvers(int groupSize,
                                   vector<SolverInterface *> & solvers);
-
-   /// Instantiate and return a melted group of solvers.
-   static void createComboSolvers(int groupeSize,
-                                  vector<SolverInterface *> & solvers);
-
-   /// Clone and return a new solver.
-   static SolverInterface * cloneSolver(SolverInterface * other);
 
    /// Print stats of a groupe of solvers.
    static void printStats(const vector<SolverInterface *> & solvers);

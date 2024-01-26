@@ -1,0 +1,840 @@
+MODULE main
+  VAR
+    b : array 0..2 of signed word[32];
+    readers : signed word[32];
+    sem : signed word[32];
+    chnlge_to : signed word[32];
+    p_initial : process initial(self);
+  ASSIGN
+    init(b[0]) := swconst(0, 32);
+    init(b[1]) := swconst(0, 32);
+    init(b[2]) := swconst(0, 32);
+    init(readers) := swconst(0, 32);
+    init(sem) := swconst(1, 32);
+    init(chnlge_to) := swconst(0, 32);
+  TRANS
+    !running
+
+MODULE slave_1(sup, tick)
+  VAR
+    runable : boolean;
+    pc : 1..45;
+  ASSIGN
+    init(runable) := tick;
+    init(pc) := 1;
+    next(sup.sem) := 
+            case
+               pc = 3 : swconst(0,32);
+               pc = 42 : swconst(1,32);
+               TRUE   : sup.sem;
+            esac;
+    next(sup.b[0]) := 
+            case
+               pc = 7 : swconst(0,32);
+               pc = 19 : swconst(1,32);
+               pc = 31 : swconst(2,32);
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 10 : swconst(0,32);
+               pc = 22 : swconst(1,32);
+               pc = 34 : swconst(2,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 13 : swconst(0,32);
+               pc = 25 : swconst(1,32);
+               pc = 37 : swconst(2,32);
+               TRUE   : sup.b[2];
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.sem = swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.b[0] = swconst(1,32) & next(pc) = 6
+             | pc = 5 & sup.b[1] = swconst(1,32) & next(pc) = 9
+             | pc = 5 & sup.b[2] = swconst(1,32) & next(pc) = 12
+             | pc = 5 & sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) & next(pc) = 15
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 17
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 17
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & next(pc) = 17
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & sup.b[0] = swconst(2,32) & next(pc) = 18
+             | pc = 17 & sup.b[1] = swconst(2,32) & next(pc) = 21
+             | pc = 17 & sup.b[2] = swconst(2,32) & next(pc) = 24
+             | pc = 17 & sup.b[0] != swconst(2,32) & sup.b[1] != swconst(2,32) & sup.b[2] != swconst(2,32) & next(pc) = 27
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & next(pc) = 29
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 29
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 29
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 44
+             | pc = 29 & sup.b[0] = swconst(0,32) & next(pc) = 30
+             | pc = 29 & sup.b[1] = swconst(0,32) & next(pc) = 33
+             | pc = 29 & sup.b[2] = swconst(0,32) & next(pc) = 36
+             | pc = 29 & sup.b[0] != swconst(0,32) & sup.b[1] != swconst(0,32) & sup.b[2] != swconst(0,32) & next(pc) = 39
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & next(pc) = 32
+             | pc = 32 & next(pc) = 41
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 35
+             | pc = 35 & next(pc) = 41
+             | pc = 36 & next(pc) = 37
+             | pc = 37 & next(pc) = 38
+             | pc = 38 & next(pc) = 41
+             | pc = 39 & next(pc) = 40
+             | pc = 40 & next(pc) = 44
+             | pc = 41 & next(pc) = 42
+             | pc = 42 & next(pc) = 43
+             | pc = 43 & next(pc) = 1
+             | pc = 44 & FALSE & next(pc) = 45
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 6
+      | pc = 7
+      | pc = 9
+      | pc = 10
+      | pc = 12
+      | pc = 13
+      | pc = 15
+      | pc = 18
+      | pc = 19
+      | pc = 21
+      | pc = 22
+      | pc = 24
+      | pc = 25
+      | pc = 27
+      | pc = 30
+      | pc = 31
+      | pc = 33
+      | pc = 34
+      | pc = 36
+      | pc = 37
+      | pc = 39
+      | pc = 42
+       -> running )
+    & ( pc = 1 & sup.sem != swconst(1,32)
+      | pc = 5 & !(sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) | sup.b[2] = swconst(1,32) | sup.b[1] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 17 & !(sup.b[0] != swconst(2,32) & sup.b[1] != swconst(2,32) & sup.b[2] != swconst(2,32) | sup.b[2] = swconst(2,32) | sup.b[1] = swconst(2,32) | sup.b[0] = swconst(2,32))
+      | pc = 29 & !(sup.b[0] != swconst(0,32) & sup.b[1] != swconst(0,32) & sup.b[2] != swconst(0,32) | sup.b[2] = swconst(0,32) | sup.b[1] = swconst(0,32) | sup.b[0] = swconst(0,32))
+      | pc = 44 & !FALSE
+      | pc = 45
+      | !runable
+       -> !running )
+
+
+MODULE slave_2(sup, tick)
+  VAR
+    runable : boolean;
+    pc : 1..45;
+  ASSIGN
+    init(runable) := tick;
+    init(pc) := 1;
+    next(sup.sem) := 
+            case
+               pc = 3 : swconst(0,32);
+               pc = 42 : swconst(1,32);
+               TRUE   : sup.sem;
+            esac;
+    next(sup.b[0]) := 
+            case
+               pc = 7 : swconst(0,32);
+               pc = 19 : swconst(1,32);
+               pc = 31 : swconst(2,32);
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 10 : swconst(0,32);
+               pc = 22 : swconst(1,32);
+               pc = 34 : swconst(2,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 13 : swconst(0,32);
+               pc = 25 : swconst(1,32);
+               pc = 37 : swconst(2,32);
+               TRUE   : sup.b[2];
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.sem = swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.b[0] = swconst(1,32) & next(pc) = 6
+             | pc = 5 & sup.b[1] = swconst(1,32) & next(pc) = 9
+             | pc = 5 & sup.b[2] = swconst(1,32) & next(pc) = 12
+             | pc = 5 & sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) & next(pc) = 15
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 17
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 17
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & next(pc) = 17
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & sup.b[0] = swconst(2,32) & next(pc) = 18
+             | pc = 17 & sup.b[1] = swconst(2,32) & next(pc) = 21
+             | pc = 17 & sup.b[2] = swconst(2,32) & next(pc) = 24
+             | pc = 17 & sup.b[0] != swconst(2,32) & sup.b[1] != swconst(2,32) & sup.b[2] != swconst(2,32) & next(pc) = 27
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & next(pc) = 29
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 29
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 29
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 44
+             | pc = 29 & sup.b[0] = swconst(0,32) & next(pc) = 30
+             | pc = 29 & sup.b[1] = swconst(0,32) & next(pc) = 33
+             | pc = 29 & sup.b[2] = swconst(0,32) & next(pc) = 36
+             | pc = 29 & sup.b[0] != swconst(0,32) & sup.b[1] != swconst(0,32) & sup.b[2] != swconst(0,32) & next(pc) = 39
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & next(pc) = 32
+             | pc = 32 & next(pc) = 41
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 35
+             | pc = 35 & next(pc) = 41
+             | pc = 36 & next(pc) = 37
+             | pc = 37 & next(pc) = 38
+             | pc = 38 & next(pc) = 41
+             | pc = 39 & next(pc) = 40
+             | pc = 40 & next(pc) = 44
+             | pc = 41 & next(pc) = 42
+             | pc = 42 & next(pc) = 43
+             | pc = 43 & next(pc) = 1
+             | pc = 44 & FALSE & next(pc) = 45
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 6
+      | pc = 7
+      | pc = 9
+      | pc = 10
+      | pc = 12
+      | pc = 13
+      | pc = 15
+      | pc = 18
+      | pc = 19
+      | pc = 21
+      | pc = 22
+      | pc = 24
+      | pc = 25
+      | pc = 27
+      | pc = 30
+      | pc = 31
+      | pc = 33
+      | pc = 34
+      | pc = 36
+      | pc = 37
+      | pc = 39
+      | pc = 42
+       -> running )
+    & ( pc = 1 & sup.sem != swconst(1,32)
+      | pc = 5 & !(sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) | sup.b[2] = swconst(1,32) | sup.b[1] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 17 & !(sup.b[0] != swconst(2,32) & sup.b[1] != swconst(2,32) & sup.b[2] != swconst(2,32) | sup.b[2] = swconst(2,32) | sup.b[1] = swconst(2,32) | sup.b[0] = swconst(2,32))
+      | pc = 29 & !(sup.b[0] != swconst(0,32) & sup.b[1] != swconst(0,32) & sup.b[2] != swconst(0,32) | sup.b[2] = swconst(0,32) | sup.b[1] = swconst(0,32) | sup.b[0] = swconst(0,32))
+      | pc = 44 & !FALSE
+      | pc = 45
+      | !runable
+       -> !running )
+
+
+MODULE master_1(sup, tick)
+  VAR
+    runable : boolean;
+    pc : 1..61;
+  ASSIGN
+    init(runable) := tick;
+    init(pc) := 1;
+    next(sup.sem) := 
+            case
+               pc = 3 : swconst(0,32);
+               pc = 25 : swconst(1,32);
+               pc = 29 : swconst(1,32);
+               pc = 33 : swconst(0,32);
+               pc = 59 : swconst(1,32);
+               TRUE   : sup.sem;
+            esac;
+    next(sup.b[0]) := 
+            case
+               pc = 16 : swconst(3,32);
+               pc = 50 : sup.chnlge_to;
+               pc = 53 : sup.chnlge_to;
+               pc = 56 : sup.chnlge_to;
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 19 : swconst(3,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 22 : swconst(3,32);
+               TRUE   : sup.b[2];
+            esac;
+    next(sup.readers) := 
+            case
+               pc = 28 : sup.readers + swconst(1,32);
+               pc = 34 : sup.readers - swconst(1,32);
+               TRUE   : sup.readers;
+            esac;
+    next(sup.chnlge_to) := 
+            case
+               pc = 43 : swconst(0,32);
+               pc = 46 : swconst(1,32);
+               TRUE   : sup.chnlge_to;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.sem = swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.b[0] = swconst(3,32) & next(pc) = 6
+             | pc = 5 & sup.b[1] = swconst(3,32) & next(pc) = 8
+             | pc = 5 & sup.b[2] = swconst(3,32) & next(pc) = 10
+             | pc = 5 & sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) & next(pc) = 12
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 27
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 27
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 27
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & sup.b[0] = swconst(1,32) & next(pc) = 15
+             | pc = 14 & sup.b[1] = swconst(1,32) & next(pc) = 18
+             | pc = 14 & sup.b[2] = swconst(1,32) & next(pc) = 21
+             | pc = 14 & sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) & next(pc) = 24
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 27
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & next(pc) = 27
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 27
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 1
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 29
+             | pc = 29 & next(pc) = 30
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & sup.sem = swconst(1,32) & next(pc) = 32
+             | pc = 32 & next(pc) = 33
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 35
+             | pc = 35 & next(pc) = 36
+             | pc = 36 & sup.readers = swconst(0,32) & next(pc) = 37
+             | pc = 36 & sup.readers > swconst(0,32) & next(pc) = 39
+             | pc = 37 & next(pc) = 38
+             | pc = 38 & next(pc) = 41
+             | pc = 39 & next(pc) = 40
+             | pc = 40 & next(pc) = 58
+             | pc = 41 & (sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32)) & next(pc) = 42
+             | pc = 41 & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & next(pc) = 45
+             | pc = 42 & next(pc) = 43
+             | pc = 43 & next(pc) = 44
+             | pc = 44 & next(pc) = 48
+             | pc = 45 & next(pc) = 46
+             | pc = 46 & next(pc) = 47
+             | pc = 47 & next(pc) = 48
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 49
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 52
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 55
+             | pc = 49 & next(pc) = 50
+             | pc = 50 & next(pc) = 51
+             | pc = 51 & next(pc) = 58
+             | pc = 52 & next(pc) = 53
+             | pc = 53 & next(pc) = 54
+             | pc = 54 & next(pc) = 58
+             | pc = 55 & next(pc) = 56
+             | pc = 56 & next(pc) = 57
+             | pc = 57 & next(pc) = 58
+             | pc = 58 & next(pc) = 59
+             | pc = 59 & next(pc) = 60
+             | pc = 60 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 6
+      | pc = 8
+      | pc = 10
+      | pc = 12
+      | pc = 15
+      | pc = 16
+      | pc = 18
+      | pc = 19
+      | pc = 21
+      | pc = 22
+      | pc = 24
+      | pc = 25
+      | pc = 28
+      | pc = 29
+      | pc = 32
+      | pc = 33
+      | pc = 34
+      | pc = 37
+      | pc = 39
+      | pc = 42
+      | pc = 43
+      | pc = 45
+      | pc = 46
+      | pc = 49
+      | pc = 50
+      | pc = 52
+      | pc = 53
+      | pc = 55
+      | pc = 56
+      | pc = 59
+       -> running )
+    & ( pc = 1 & sup.sem != swconst(1,32)
+      | pc = 5 & !(sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) | sup.b[2] = swconst(3,32) | sup.b[1] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 14 & !(sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) | sup.b[2] = swconst(1,32) | sup.b[1] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 31 & sup.sem != swconst(1,32)
+      | pc = 36 & !(sup.readers > swconst(0,32) | sup.readers = swconst(0,32))
+      | pc = 41 & !(sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 48 & !(sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 61
+      | !runable
+       -> !running )
+
+
+MODULE master_2(sup, tick)
+  VAR
+    runable : boolean;
+    pc : 1..61;
+  ASSIGN
+    init(runable) := tick;
+    init(pc) := 1;
+    next(sup.sem) := 
+            case
+               pc = 3 : swconst(0,32);
+               pc = 25 : swconst(1,32);
+               pc = 29 : swconst(1,32);
+               pc = 33 : swconst(0,32);
+               pc = 59 : swconst(1,32);
+               TRUE   : sup.sem;
+            esac;
+    next(sup.b[0]) := 
+            case
+               pc = 16 : swconst(3,32);
+               pc = 50 : sup.chnlge_to;
+               pc = 53 : sup.chnlge_to;
+               pc = 56 : sup.chnlge_to;
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 19 : swconst(3,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 22 : swconst(3,32);
+               TRUE   : sup.b[2];
+            esac;
+    next(sup.readers) := 
+            case
+               pc = 28 : sup.readers + swconst(1,32);
+               pc = 34 : sup.readers - swconst(1,32);
+               TRUE   : sup.readers;
+            esac;
+    next(sup.chnlge_to) := 
+            case
+               pc = 43 : swconst(0,32);
+               pc = 46 : swconst(1,32);
+               TRUE   : sup.chnlge_to;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.sem = swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.b[0] = swconst(3,32) & next(pc) = 6
+             | pc = 5 & sup.b[1] = swconst(3,32) & next(pc) = 8
+             | pc = 5 & sup.b[2] = swconst(3,32) & next(pc) = 10
+             | pc = 5 & sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) & next(pc) = 12
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 27
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 27
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 27
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & sup.b[0] = swconst(1,32) & next(pc) = 15
+             | pc = 14 & sup.b[1] = swconst(1,32) & next(pc) = 18
+             | pc = 14 & sup.b[2] = swconst(1,32) & next(pc) = 21
+             | pc = 14 & sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) & next(pc) = 24
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 27
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & next(pc) = 27
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 27
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 1
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 29
+             | pc = 29 & next(pc) = 30
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & sup.sem = swconst(1,32) & next(pc) = 32
+             | pc = 32 & next(pc) = 33
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 35
+             | pc = 35 & next(pc) = 36
+             | pc = 36 & sup.readers = swconst(0,32) & next(pc) = 37
+             | pc = 36 & sup.readers > swconst(0,32) & next(pc) = 39
+             | pc = 37 & next(pc) = 38
+             | pc = 38 & next(pc) = 41
+             | pc = 39 & next(pc) = 40
+             | pc = 40 & next(pc) = 58
+             | pc = 41 & (sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32)) & next(pc) = 42
+             | pc = 41 & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & next(pc) = 45
+             | pc = 42 & next(pc) = 43
+             | pc = 43 & next(pc) = 44
+             | pc = 44 & next(pc) = 48
+             | pc = 45 & next(pc) = 46
+             | pc = 46 & next(pc) = 47
+             | pc = 47 & next(pc) = 48
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 49
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 52
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 55
+             | pc = 49 & next(pc) = 50
+             | pc = 50 & next(pc) = 51
+             | pc = 51 & next(pc) = 58
+             | pc = 52 & next(pc) = 53
+             | pc = 53 & next(pc) = 54
+             | pc = 54 & next(pc) = 58
+             | pc = 55 & next(pc) = 56
+             | pc = 56 & next(pc) = 57
+             | pc = 57 & next(pc) = 58
+             | pc = 58 & next(pc) = 59
+             | pc = 59 & next(pc) = 60
+             | pc = 60 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 6
+      | pc = 8
+      | pc = 10
+      | pc = 12
+      | pc = 15
+      | pc = 16
+      | pc = 18
+      | pc = 19
+      | pc = 21
+      | pc = 22
+      | pc = 24
+      | pc = 25
+      | pc = 28
+      | pc = 29
+      | pc = 32
+      | pc = 33
+      | pc = 34
+      | pc = 37
+      | pc = 39
+      | pc = 42
+      | pc = 43
+      | pc = 45
+      | pc = 46
+      | pc = 49
+      | pc = 50
+      | pc = 52
+      | pc = 53
+      | pc = 55
+      | pc = 56
+      | pc = 59
+       -> running )
+    & ( pc = 1 & sup.sem != swconst(1,32)
+      | pc = 5 & !(sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) | sup.b[2] = swconst(3,32) | sup.b[1] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 14 & !(sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) | sup.b[2] = swconst(1,32) | sup.b[1] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 31 & sup.sem != swconst(1,32)
+      | pc = 36 & !(sup.readers > swconst(0,32) | sup.readers = swconst(0,32))
+      | pc = 41 & !(sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 48 & !(sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 61
+      | !runable
+       -> !running )
+
+
+MODULE master_3(sup, tick)
+  VAR
+    runable : boolean;
+    pc : 1..61;
+  ASSIGN
+    init(runable) := tick;
+    init(pc) := 1;
+    next(sup.sem) := 
+            case
+               pc = 3 : swconst(0,32);
+               pc = 25 : swconst(1,32);
+               pc = 29 : swconst(1,32);
+               pc = 33 : swconst(0,32);
+               pc = 59 : swconst(1,32);
+               TRUE   : sup.sem;
+            esac;
+    next(sup.b[0]) := 
+            case
+               pc = 16 : swconst(3,32);
+               pc = 50 : sup.chnlge_to;
+               pc = 53 : sup.chnlge_to;
+               pc = 56 : sup.chnlge_to;
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 19 : swconst(3,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 22 : swconst(3,32);
+               TRUE   : sup.b[2];
+            esac;
+    next(sup.readers) := 
+            case
+               pc = 28 : sup.readers + swconst(1,32);
+               pc = 34 : sup.readers - swconst(1,32);
+               TRUE   : sup.readers;
+            esac;
+    next(sup.chnlge_to) := 
+            case
+               pc = 43 : swconst(0,32);
+               pc = 46 : swconst(1,32);
+               TRUE   : sup.chnlge_to;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.sem = swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & sup.b[0] = swconst(3,32) & next(pc) = 6
+             | pc = 5 & sup.b[1] = swconst(3,32) & next(pc) = 8
+             | pc = 5 & sup.b[2] = swconst(3,32) & next(pc) = 10
+             | pc = 5 & sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) & next(pc) = 12
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 27
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 27
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 27
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & sup.b[0] = swconst(1,32) & next(pc) = 15
+             | pc = 14 & sup.b[1] = swconst(1,32) & next(pc) = 18
+             | pc = 14 & sup.b[2] = swconst(1,32) & next(pc) = 21
+             | pc = 14 & sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) & next(pc) = 24
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 27
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & next(pc) = 27
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 27
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 1
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 29
+             | pc = 29 & next(pc) = 30
+             | pc = 30 & next(pc) = 31
+             | pc = 31 & sup.sem = swconst(1,32) & next(pc) = 32
+             | pc = 32 & next(pc) = 33
+             | pc = 33 & next(pc) = 34
+             | pc = 34 & next(pc) = 35
+             | pc = 35 & next(pc) = 36
+             | pc = 36 & sup.readers = swconst(0,32) & next(pc) = 37
+             | pc = 36 & sup.readers > swconst(0,32) & next(pc) = 39
+             | pc = 37 & next(pc) = 38
+             | pc = 38 & next(pc) = 41
+             | pc = 39 & next(pc) = 40
+             | pc = 40 & next(pc) = 58
+             | pc = 41 & (sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32)) & next(pc) = 42
+             | pc = 41 & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & next(pc) = 45
+             | pc = 42 & next(pc) = 43
+             | pc = 43 & next(pc) = 44
+             | pc = 44 & next(pc) = 48
+             | pc = 45 & next(pc) = 46
+             | pc = 46 & next(pc) = 47
+             | pc = 47 & next(pc) = 48
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 49
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 52
+             | pc = 48 & sup.b[0] = swconst(3,32) & next(pc) = 55
+             | pc = 49 & next(pc) = 50
+             | pc = 50 & next(pc) = 51
+             | pc = 51 & next(pc) = 58
+             | pc = 52 & next(pc) = 53
+             | pc = 53 & next(pc) = 54
+             | pc = 54 & next(pc) = 58
+             | pc = 55 & next(pc) = 56
+             | pc = 56 & next(pc) = 57
+             | pc = 57 & next(pc) = 58
+             | pc = 58 & next(pc) = 59
+             | pc = 59 & next(pc) = 60
+             | pc = 60 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 6
+      | pc = 8
+      | pc = 10
+      | pc = 12
+      | pc = 15
+      | pc = 16
+      | pc = 18
+      | pc = 19
+      | pc = 21
+      | pc = 22
+      | pc = 24
+      | pc = 25
+      | pc = 28
+      | pc = 29
+      | pc = 32
+      | pc = 33
+      | pc = 34
+      | pc = 37
+      | pc = 39
+      | pc = 42
+      | pc = 43
+      | pc = 45
+      | pc = 46
+      | pc = 49
+      | pc = 50
+      | pc = 52
+      | pc = 53
+      | pc = 55
+      | pc = 56
+      | pc = 59
+       -> running )
+    & ( pc = 1 & sup.sem != swconst(1,32)
+      | pc = 5 & !(sup.b[0] != swconst(3,32) & sup.b[1] != swconst(3,32) & sup.b[2] != swconst(3,32) | sup.b[2] = swconst(3,32) | sup.b[1] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 14 & !(sup.b[0] != swconst(1,32) & sup.b[1] != swconst(1,32) & sup.b[2] != swconst(1,32) | sup.b[2] = swconst(1,32) | sup.b[1] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 31 & sup.sem != swconst(1,32)
+      | pc = 36 & !(sup.readers > swconst(0,32) | sup.readers = swconst(0,32))
+      | pc = 41 & !(sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) & sup.b[0] != swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32) | sup.b[0] = swconst(1,32))
+      | pc = 48 & !(sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32) | sup.b[0] = swconst(3,32))
+      | pc = 61
+      | !runable
+       -> !running )
+
+
+MODULE initial(sup)
+  VAR
+    p4_slave_1 : process slave_1(sup, FALSE);
+    p5_slave_2 : process slave_2(sup, FALSE);
+    p6_master_1 : process master_1(sup, FALSE);
+    p7_master_2 : process master_2(sup, FALSE);
+    p8_master_3 : process master_3(sup, FALSE);
+    pc : 1..9;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.b[0]) := 
+            case
+               pc = 1 : swconst(0,32);
+               TRUE   : sup.b[0];
+            esac;
+    next(sup.b[1]) := 
+            case
+               pc = 2 : swconst(0,32);
+               TRUE   : sup.b[1];
+            esac;
+    next(sup.b[2]) := 
+            case
+               pc = 3 : swconst(2,32);
+               TRUE   : sup.b[2];
+            esac;
+    next(p4_slave_1.runable) := 
+            case
+               pc = 4 : TRUE;
+               TRUE   : p4_slave_1.runable;
+            esac;
+    next(p5_slave_2.runable) := 
+            case
+               pc = 5 : TRUE;
+               TRUE   : p5_slave_2.runable;
+            esac;
+    next(p6_master_1.runable) := 
+            case
+               pc = 6 : TRUE;
+               TRUE   : p6_master_1.runable;
+            esac;
+    next(p7_master_2.runable) := 
+            case
+               pc = 7 : TRUE;
+               TRUE   : p7_master_2.runable;
+            esac;
+    next(p8_master_3.runable) := 
+            case
+               pc = 8 : TRUE;
+               TRUE   : p8_master_3.runable;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 5
+      | pc = 6
+      | pc = 7
+      | pc = 8
+       -> running )
+    & ( pc = 9
+       -> !running )
+
+
+
+LTLSPEC G((p_initial.p6_master_1.runable) & (X((p_initial.p4_slave_1.runable) | ((G(!(p_initial.p7_master_2.runable))) U ((!(p_initial.p6_master_1.runable)) & (G(!(p_initial.p7_master_2.runable))))))))
+

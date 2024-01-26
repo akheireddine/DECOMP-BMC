@@ -1,0 +1,538 @@
+MODULE main
+  VAR
+    glukosa : signed word[32];
+    ATP : signed word[32];
+    ADP : signed word[32];
+    NADp : signed word[32];
+    NADH : signed word[32];
+    puryvat : signed word[32];
+    acetyl_co_a : signed word[32];
+    O2 : signed word[32];
+    CO2 : signed word[32];
+    Hp : signed word[32];
+    H20 : signed word[32];
+    energy : signed word[32];
+    electrons : process Ch_1_int;
+    p_glykoza : process glykoza(self);
+    p_puryvat_oxyd : process puryvat_oxyd(self);
+    p_krebs_0 : process krebs_0(self);
+    p_krebs_1 : process krebs_1(self);
+    p_glykolyza : process glykolyza(self);
+    p_ETS : process ETS(self);
+    p_rest_of_cell : process rest_of_cell(self);
+  ASSIGN
+    init(glukosa) := swconst(3, 32);
+    init(ATP) := swconst(4, 32);
+    init(ADP) := swconst(4, 32);
+    init(NADp) := swconst(12, 32);
+    init(NADH) := swconst(2, 32);
+    init(puryvat) := swconst(0, 32);
+    init(acetyl_co_a) := swconst(0, 32);
+    init(O2) := swconst(15, 32);
+    init(CO2) := swconst(0, 32);
+    init(Hp) := swconst(10, 32);
+    init(H20) := swconst(10, 32);
+    init(energy) := swconst(0, 32);
+  TRANS
+    !running
+
+MODULE Ch_1_int
+  VAR
+    ele1 : array 0..0 of signed word[32];
+    point : -1..0;
+  ASSIGN
+    init(ele1[0]) := swconst(0, 32);
+    init(point) := 0;
+  TRANS
+    !running
+
+MODULE glykoza(sup)
+  VAR
+    pc : 1..12;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.glukosa) := 
+            case
+               pc = 3 : sup.glukosa - swconst(1,32);
+               TRUE   : sup.glukosa;
+            esac;
+    next(sup.ADP) := 
+            case
+               pc = 4 : sup.ADP - swconst(2,32);
+               TRUE   : sup.ADP;
+            esac;
+    next(sup.ATP) := 
+            case
+               pc = 5 : sup.ATP + swconst(2,32);
+               TRUE   : sup.ATP;
+            esac;
+    next(sup.NADp) := 
+            case
+               pc = 6 : sup.NADp - swconst(2,32);
+               TRUE   : sup.NADp;
+            esac;
+    next(sup.NADH) := 
+            case
+               pc = 7 : sup.NADH + swconst(2,32);
+               TRUE   : sup.NADH;
+            esac;
+    next(sup.puryvat) := 
+            case
+               pc = 8 : sup.puryvat + swconst(2,32);
+               TRUE   : sup.puryvat;
+            esac;
+    next(sup.Hp) := 
+            case
+               pc = 9 : sup.Hp + swconst(2,32);
+               TRUE   : sup.Hp;
+            esac;
+    next(sup.H20) := 
+            case
+               pc = 10 : sup.H20 + swconst(2,32);
+               TRUE   : sup.H20;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.glukosa >= swconst(1,32) & sup.ATP >= swconst(2,32) & sup.ADP >= swconst(2,32) & sup.NADp >= swconst(2,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 4
+      | pc = 5
+      | pc = 6
+      | pc = 7
+      | pc = 8
+      | pc = 9
+      | pc = 10
+       -> running )
+    & ( pc = 1 & !(sup.glukosa >= swconst(1,32) & sup.ATP >= swconst(2,32) & sup.ADP >= swconst(2,32) & sup.NADp >= swconst(2,32))
+      | pc = 12
+       -> !running )
+
+
+MODULE puryvat_oxyd(sup)
+  VAR
+    pc : 1..9;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.puryvat) := 
+            case
+               pc = 3 : sup.puryvat - swconst(1,32);
+               TRUE   : sup.puryvat;
+            esac;
+    next(sup.NADp) := 
+            case
+               pc = 4 : sup.NADp - swconst(1,32);
+               TRUE   : sup.NADp;
+            esac;
+    next(sup.acetyl_co_a) := 
+            case
+               pc = 5 : sup.acetyl_co_a + swconst(1,32);
+               TRUE   : sup.acetyl_co_a;
+            esac;
+    next(sup.NADH) := 
+            case
+               pc = 6 : sup.NADH + swconst(1,32);
+               TRUE   : sup.NADH;
+            esac;
+    next(sup.CO2) := 
+            case
+               pc = 7 : sup.CO2 + swconst(1,32);
+               TRUE   : sup.CO2;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.puryvat >= swconst(1,32) & sup.NADp >= swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 4
+      | pc = 5
+      | pc = 6
+      | pc = 7
+       -> running )
+    & ( pc = 1 & !(sup.puryvat >= swconst(1,32) & sup.NADp >= swconst(1,32))
+      | pc = 9
+       -> !running )
+
+
+MODULE krebs_0(sup)
+  VAR
+    pc : 1..30;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.acetyl_co_a) := 
+            case
+               pc = 3 : sup.acetyl_co_a - swconst(1,32);
+               TRUE   : sup.acetyl_co_a;
+            esac;
+    next(sup.H20) := 
+            case
+               pc = 4 : sup.H20 - swconst(1,32);
+               pc = 22 : sup.H20 - swconst(1,32);
+               TRUE   : sup.H20;
+            esac;
+    next(sup.NADp) := 
+            case
+               pc = 10 : sup.NADp - swconst(1,32);
+               pc = 26 : sup.NADp - swconst(1,32);
+               TRUE   : sup.NADp;
+            esac;
+    next(sup.NADH) := 
+            case
+               pc = 11 : sup.NADH + swconst(1,32);
+               pc = 17 : sup.NADH + swconst(1,32);
+               pc = 27 : sup.NADH + swconst(1,32);
+               TRUE   : sup.NADH;
+            esac;
+    next(sup.Hp) := 
+            case
+               pc = 12 : sup.Hp + swconst(1,32);
+               TRUE   : sup.Hp;
+            esac;
+    next(sup.CO2) := 
+            case
+               pc = 13 : sup.CO2 + swconst(1,32);
+               pc = 18 : sup.CO2 + swconst(1,32);
+               TRUE   : sup.CO2;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.acetyl_co_a >= swconst(1,32) & sup.H20 >= swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & sup.NADp >= swconst(1,32) & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & sup.NADp >= swconst(1,32) & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & sup.H20 >= swconst(1,32) & next(pc) = 21
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 24
+             | pc = 24 & sup.NADp >= swconst(1,32) & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 27
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 1
+             | pc = 29 & FALSE & next(pc) = 30
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 4
+      | pc = 7
+      | pc = 9
+      | pc = 10
+      | pc = 11
+      | pc = 12
+      | pc = 13
+      | pc = 16
+      | pc = 17
+      | pc = 18
+      | pc = 21
+      | pc = 22
+      | pc = 25
+      | pc = 26
+      | pc = 27
+       -> running )
+    & ( pc = 1 & !(sup.acetyl_co_a >= swconst(1,32) & sup.H20 >= swconst(1,32))
+      | pc = 8 & sup.NADp < swconst(1,32)
+      | pc = 15 & sup.NADp < swconst(1,32)
+      | pc = 20 & sup.H20 < swconst(1,32)
+      | pc = 24 & sup.NADp < swconst(1,32)
+      | pc = 29 & !FALSE
+      | pc = 30
+       -> !running )
+
+
+MODULE krebs_1(sup)
+  VAR
+    pc : 1..30;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.acetyl_co_a) := 
+            case
+               pc = 3 : sup.acetyl_co_a - swconst(1,32);
+               TRUE   : sup.acetyl_co_a;
+            esac;
+    next(sup.H20) := 
+            case
+               pc = 4 : sup.H20 - swconst(1,32);
+               pc = 22 : sup.H20 - swconst(1,32);
+               TRUE   : sup.H20;
+            esac;
+    next(sup.NADp) := 
+            case
+               pc = 10 : sup.NADp - swconst(1,32);
+               pc = 26 : sup.NADp - swconst(1,32);
+               TRUE   : sup.NADp;
+            esac;
+    next(sup.NADH) := 
+            case
+               pc = 11 : sup.NADH + swconst(1,32);
+               pc = 17 : sup.NADH + swconst(1,32);
+               pc = 27 : sup.NADH + swconst(1,32);
+               TRUE   : sup.NADH;
+            esac;
+    next(sup.Hp) := 
+            case
+               pc = 12 : sup.Hp + swconst(1,32);
+               TRUE   : sup.Hp;
+            esac;
+    next(sup.CO2) := 
+            case
+               pc = 13 : sup.CO2 + swconst(1,32);
+               pc = 18 : sup.CO2 + swconst(1,32);
+               TRUE   : sup.CO2;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.acetyl_co_a >= swconst(1,32) & sup.H20 >= swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & sup.NADp >= swconst(1,32) & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & next(pc) = 13
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & sup.NADp >= swconst(1,32) & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & next(pc) = 20
+             | pc = 20 & sup.H20 >= swconst(1,32) & next(pc) = 21
+             | pc = 21 & next(pc) = 22
+             | pc = 22 & next(pc) = 23
+             | pc = 23 & next(pc) = 24
+             | pc = 24 & sup.NADp >= swconst(1,32) & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 27
+             | pc = 27 & next(pc) = 28
+             | pc = 28 & next(pc) = 1
+             | pc = 29 & FALSE & next(pc) = 30
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 4
+      | pc = 7
+      | pc = 9
+      | pc = 10
+      | pc = 11
+      | pc = 12
+      | pc = 13
+      | pc = 16
+      | pc = 17
+      | pc = 18
+      | pc = 21
+      | pc = 22
+      | pc = 25
+      | pc = 26
+      | pc = 27
+       -> running )
+    & ( pc = 1 & !(sup.acetyl_co_a >= swconst(1,32) & sup.H20 >= swconst(1,32))
+      | pc = 8 & sup.NADp < swconst(1,32)
+      | pc = 15 & sup.NADp < swconst(1,32)
+      | pc = 20 & sup.H20 < swconst(1,32)
+      | pc = 24 & sup.NADp < swconst(1,32)
+      | pc = 29 & !FALSE
+      | pc = 30
+       -> !running )
+
+
+MODULE glykolyza(sup)
+  VAR
+    pc : 1..11;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.electrons.ele1[0]) := 
+            case
+               pc = 3 & sup.electrons.point = 0 : swconst(0,32);
+               TRUE   : sup.electrons.ele1[0];
+            esac;
+    next(sup.electrons.point) := 
+            case
+               pc = 3 & sup.electrons.point >= 0 : sup.electrons.point - 1;
+               TRUE   : sup.electrons.point;
+            esac;
+    next(sup.NADH) := 
+            case
+               pc = 5 : sup.NADH - swconst(1,32);
+               TRUE   : sup.NADH;
+            esac;
+    next(sup.NADp) := 
+            case
+               pc = 6 : sup.NADp + swconst(1,32);
+               TRUE   : sup.NADp;
+            esac;
+    next(sup.O2) := 
+            case
+               pc = 7 : sup.O2 - swconst(1,32);
+               TRUE   : sup.O2;
+            esac;
+    next(sup.Hp) := 
+            case
+               pc = 8 : sup.Hp - swconst(2,32);
+               TRUE   : sup.Hp;
+            esac;
+    next(sup.H20) := 
+            case
+               pc = 9 : sup.H20 + swconst(1,32);
+               TRUE   : sup.H20;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.NADH >= swconst(1,32) & sup.O2 >= swconst(1,32) & sup.Hp >= swconst(2,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.electrons.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.electrons.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.electrons.point >= 0
+      | pc = 4 & sup.electrons.point = 0
+      | pc = 5
+      | pc = 6
+      | pc = 7
+      | pc = 8
+      | pc = 9
+       -> running )
+    & ( pc = 1 & !(sup.NADH >= swconst(1,32) & sup.O2 >= swconst(1,32) & sup.Hp >= swconst(2,32))
+      | pc = 3 & sup.electrons.point < 0
+      | pc = 4 & sup.electrons.point != 0
+      | pc = 11
+       -> !running )
+
+
+MODULE ETS(sup)
+  VAR
+    pc : 1..7;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.electrons.ele1[0]) := 
+            case
+               pc = 3 & sup.electrons.point < 0 & swconst(0,32) = sup.electrons.ele1[0] : swconst(0,32);
+               TRUE   : sup.electrons.ele1[0];
+            esac;
+    next(sup.electrons.point) := 
+            case
+               pc = 3 & sup.electrons.point < 0 & swconst(0,32) = sup.electrons.ele1[0] : sup.electrons.point + 1;
+               TRUE   : sup.electrons.point;
+            esac;
+    next(sup.ADP) := 
+            case
+               pc = 4 : sup.ADP - swconst(2,32);
+               TRUE   : sup.ADP;
+            esac;
+    next(sup.ATP) := 
+            case
+               pc = 5 : sup.ATP + swconst(2,32);
+               TRUE   : sup.ATP;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.ADP >= swconst(2,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.electrons.point < 0 & swconst(0,32) = sup.electrons.ele1[0] & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.electrons.point < 0 & swconst(0,32) = sup.electrons.ele1[0]
+      | pc = 4
+      | pc = 5
+       -> running )
+    & ( pc = 1 & sup.ADP < swconst(2,32)
+      | pc = 3 & !(sup.electrons.point < 0 & swconst(0,32) = sup.electrons.ele1[0])
+      | pc = 7
+       -> !running )
+
+
+MODULE rest_of_cell(sup)
+  VAR
+    pc : 1..7;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.ATP) := 
+            case
+               pc = 3 : sup.ATP - swconst(1,32);
+               TRUE   : sup.ATP;
+            esac;
+    next(sup.ADP) := 
+            case
+               pc = 4 : sup.ADP + swconst(1,32);
+               TRUE   : sup.ADP;
+            esac;
+    next(sup.energy) := 
+            case
+               pc = 5 : sup.energy + swconst(1,32);
+               TRUE   : sup.energy;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.ATP >= swconst(1,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3
+      | pc = 4
+      | pc = 5
+       -> running )
+    & ( pc = 1 & sup.ATP < swconst(1,32)
+      | pc = 7
+       -> !running )
+
+
+
+LTLSPEC X((F( sup.glukosa=swconst(29,32) )) | (( sup.ATP=swconst(27,32) ) U (( sup.puryvat=swconst(30,32) ) | (G( sup.ATP=swconst(27,32) )))))
+

@@ -30,54 +30,44 @@
 #include "utils/System.h"
 #include "working/SequentialWorker.h"
 #include "working/Portfolio.h"
-#include "working/CubeAndConquer.h"
-
-#include "../../painless_wrapper.hh"
+#include "solvers/SolverInterface.h"
+#include "working/WorkingStrategy.h"
 
 #include <unistd.h>
+#include <thread>
+
+/// Is it the end of the search
+extern atomic<bool> globalEnding;
+
+/// Final result
+extern SatResult finalResult;
+
+/// Model for SAT instances
+extern vector<int> finalModel;
+
+/// Array of sharers
+extern Sharer **sharers;
+
+/// Size of the array of sharers
+extern int nSharers;
+
+// -------------------------------------------
+// Declaration of global variables
+// -------------------------------------------
+atomic<bool> globalEnding(false);
+
+SatResult finalResult = UNKNOWN;
+
+vector<int> finalModel;
+
+Sharer **sharers = NULL;
+
+int nSharers = 0;
+
+// -------------------------------------------
 
 using namespace std;
 
-void diversification(vector<SolverInterface *> &solvers)
-{
-   int diversification = Parameters::getIntParam("d", 0);
-
-   switch (diversification)
-   {
-   case 1:
-      SolverFactory::sparseDiversification(solvers);
-      break;
-
-   case 2:
-      SolverFactory::binValueDiversification(solvers);
-      break;
-
-   case 3:
-      SolverFactory::randomDiversification(solvers, 2015);
-      break;
-
-   case 4:
-      SolverFactory::nativeDiversification(solvers);
-      break;
-
-   case 5:
-      SolverFactory::sparseDiversification(solvers);
-      SolverFactory::nativeDiversification(solvers);
-      break;
-
-   case 6:
-      SolverFactory::sparseRandomDiversification(solvers);
-      break;
-
-   case 7:
-      SolverFactory::sparseRandomDiversification(solvers);
-      SolverFactory::nativeDiversification(solvers);
-      break;
-
-   case 0:
-      break;
-   }
-}
 
 void run_painless_strategyDeSAT(EnvBMC *env_bmc)
 {
@@ -86,24 +76,34 @@ void run_painless_strategyDeSAT(EnvBMC *env_bmc)
    vector<SolverInterface *> solvers;
    string solverType = Parameters::getParam("s", "desat");
    int nSolvers = Parameters::getIntParam("c", 1);
-   bool desatOn = Parameters::isSet("bmc-on"); // for parallel only
 
-   if (solverType == "maple")
+   if (solverType == "desat")
    {
-      SolverFactory::createMapleSolvers(nSolvers, solvers);
+      // Partition the formula and solved through multiple MiniSat1.14
+      solvers.push_back(SolverFactory::createDeSATSolver(env_bmc));
    }
    else if (solverType == "minisat-old")
    {
+      // Flat resolution through MiniSat1.14
       SolverFactory::createDeSATSolvers(nSolvers, env_bmc, solvers);
    }
-   else if (solverType == "desat")
-      solvers.push_back(SolverFactory::createDeSATSolver(env_bmc));
+   else if (solverType == "maple")
+   {
+      // Flat resolution through MapleCOMSPS
+      SolverFactory::createMapleSolvers(nSolvers, solvers);
+   }
    else
+   {
+      // Flat resolution through MiniSat2.2.0
       SolverFactory::createMiniSatSolvers(nSolvers, solvers);
+   }
 
-   diversification(solvers);
+   if(Parameters::isSet("diversify")){
+      SolverFactory::sparseRandomDiversification(solvers);
+   }
 
-   if (desatOn)// for parallel setting
+   // For parallelism only
+   if (Parameters::isSet("bmc-on"))
    {
       solvers.push_back(SolverFactory::createDeSATSolver(env_bmc));
       nSolvers++;
@@ -113,12 +113,15 @@ void run_painless_strategyDeSAT(EnvBMC *env_bmc)
    {
    case 1:
       sharers = new Sharer *[1];
-      /// Only std solvers are consumers
-      sharers[0] = new Sharer(nSolvers, new SimpleSharing(), solvers, solvers);
+      sharers[0] = new Sharer(nSolvers, new SimpleSharing(), solvers,
+                                       // BMC-D or LZY-D is not a consumer
+                                       std::vector<SolverInterface *>(solvers.begin(), solvers.end() - 1));
       break;
    case 2:
       sharers = new Sharer *[1];
-      sharers[0] = new Sharer(nSolvers, new HordeSatSharing(), solvers, solvers);
+      sharers[0] = new Sharer(nSolvers, new HordeSatSharing(), solvers,
+                                       // BMC-D or LZY-D is not a consumer
+                                       std::vector<SolverInterface *>(solvers.begin(), solvers.end() - 1));
       break;
    default:
       break;
@@ -150,7 +153,6 @@ void run_painless_strategyDeSAT(EnvBMC *env_bmc)
    std::cout << "c TIME SOLVING : " << ((float)t2) / CLOCKS_PER_SEC << endl;
 
    // Print solver stats
-   sharers[0]->printStats();
    SolverFactory::printStats(solvers);
 
    // Print the result and the model if SAT

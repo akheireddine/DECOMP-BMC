@@ -1,0 +1,97 @@
+# DECOMP-BMC
+
+This framework integrates DeSAT solver to Painless framework in order to perform Bounded Model Checking (BMC).
+It also uses NuSMV to generate DIMACS files with additional information.
+
+==== DEPENDENCIES  ====
+   See NuSMV and Painless README 
+
+==== HOW TO INSTALL  ====
+
+   Run the following commands to install all tools and dependencies:
+
+   $ make all
+   $ export LD_LIBRARY_PATH=<path-to-artifact-repository>/sources/NuSMV-2.6.0/NuSMV/lib:$LD_LIBRARY_PATH
+
+It will install DECOMP-BMC with the binary name: decomp-bmc
+
+
+#############################################################################################
+#########                             DISCLAIMER                                    #########
+######### The next sections explain how to use DECOMP-BMC  with various parameters  #########
+#############################################################################################
+
+
+==== HOW TO CONVERT SMV PROGRAM TO DIMACS ====
+   
+   You need to specify the bound k, the conversion technique (Tseitin, Sheridan) and the SMV model that already contains the LTL specification. 
+    
+    $ ./decomp-bmc -mode=c -k=<int> -conv={0,1} <filename.smv>
+
+  For instance:
+
+    $ ./decomp-bmc -mode=c -k=20 -conv=1 examples/abp8.smv
+
+  It will produce the file examples/abp8_k20.dimacs. 
+    
+    
+==== HOW TO RUN CLASSICAL SOLVER IN SEQUENTIAL ENVIRONMENT ====
+
+  There are four SAT solvers: MapleCOMSPS, MiniSat2.2.0 and MiniSat1.14 run the problem without partitioning. DeSAT employs 
+  the reconciliation scheme which needs more parameters (see below).  
+
+    $ ./decomp-bmc -s={maple,minisat-old,minisat,desat} <filename.dimacs>
+    
+  For instance:
+  
+    $ ./decomp-bmc -s=minisat-old examples/abp8_k20.dimacs
+    
+
+==== HOW TO RUN CLASSICAL SOLVER IN PARALLEL ENVIRONMENT ====
+
+  There are 3 possible sharing strategies: None, SimpleSharing and HordeSAT.
+  And must enable diversification
+  
+    $ ./decomp-bmc -s={maple,minisat-old,minisat}  -c=<int> -lbd-limit=<int> -shr-strat={0,1,2} -diversify <filename.dimacs>
+  
+  For instance:
+  
+    $ ./decomp-bmc -s=minisat-old -c=10 -lbd-limit=4 -shr-strat=1 -diversify <filename.dimacs>
+    
+  runs a portfolio of 10 threads:
+	- 10 MiniSat1.14 solvers,
+	- diversification is enable: SparseRandom,
+	- using a simple sharing strategy, and
+	- limit sharing to LBD<=4.
+           
+    
+==== HOW TO RUN DeSAT SOLVER IN SEQUENTIAL ENVIRONMENT ====
+
+   You must specify the partition strategy and the number of partition (leafs).
+   
+    $ ./decomp-bmc -s=desat -decomp={batch,random,bmc} -nleafs=<int>  <filename.dimacs>
+
+   For instance:
+
+    $ ./decomp-bmc -s=desat -decomp=bmc -nleafs=2  examples/abp8_k20.dimacs
+
+   runs DeSAT using BMC-D decomposition with 2 partitions
+
+
+==== HOW TO RUN DeSAT SOLVER IN PARALLEL ENVIRONMENT ====
+
+   In addition to the SEQUENTIAL ENVIRONMENT, you must specify the number of classical SAT solvers and clause exchange limitation.
+   The boolean parameter bmc-on is NECESSARY!
+
+    $ ./decomp-bmc -s={maple,minisat-old,minisat} -bmc-on -c=<int> -lbd-limit=<int> -shr-strat={0,1,2} -nleafs=<int> -decomp={batch,random,bmc} -lbd-limit-itp=<int> -diversify <filename.dimacs>
+
+   For instance:
+
+    $ ./decomp-bmc -s=minisat-old -c=9 -lbd-limit=4 -bmc-on -decomp=batch -nleafs=5 -shr-strat=1 -lbd-limit-itp=4 -diversify examples/abp8_k20.dimacs
+    runs a portfolio of 10 threads:
+        - 9 MiniSat1.14 solvers and,
+        - 1 LZY-D based decomposition solver using a partition of 5,
+        - diversification is enable: SparseRandom,
+        - using a simple sharing strategy, and
+        - limit sharing to LBD<=4 for both conflict clauses from MiniSat1.14 solvers and LBD<=4 for the produced interpolants.
+

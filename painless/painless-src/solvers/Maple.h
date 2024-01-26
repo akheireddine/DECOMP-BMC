@@ -123,10 +123,6 @@ public:
 
    MapleCOMSPS::SimpSolver *getSolver() { return solver; };
 
-   bool selectConflitClause(MapleCOMSPS::vec<MapleCOMSPS::Lit> &clause_confl);
-
-   bool selectConflitClause_LBDI_OptimalConfig(MapleCOMSPS::vec<MapleCOMSPS::Lit> &clause_confl, int lbd);
-
 protected:
    /// Pointer to a Maple solver.
    MapleCOMSPS::SimpSolver *solver;
@@ -147,11 +143,7 @@ protected:
    /// Size limit used to share clauses.
    atomic<int> lbdLimit;
 
-   atomic<int> shrStrat;
-
    atomic<int> memLimit;
-
-   atomic<int> code_filter_confl;
 
    atomic<int> exportClauses;
    /// Used to stop or continue the resolution.

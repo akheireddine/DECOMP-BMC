@@ -1,0 +1,139 @@
+-- The traffic light module which models the traffic lights across two directions NS and EW.
+-- Inputs:
+-- 1. turnInProgress
+-- 2. direction
+-- 3. currentAllowedDirection
+-- 4. light_timer - Timer which counts down the number of seconds left before the traffic signal changes state.
+MODULE trafficLightModule(turnInProgress, direction, currentAllowedDirection, light_timer)
+
+VAR
+  -- Traffic lights can be Red, Yellow and Green.
+  current_traffic_light   : {Red, Yellow, Green};
+
+ASSIGN
+  -- Setting initial traffic light to Red.
+  init(current_traffic_light) := Red;
+
+  next(current_traffic_light) :=
+    case
+      direction != currentAllowedDirection                                : current_traffic_light;
+      current_traffic_light = Red  & turnInProgress  & light_timer = 0    : Red;
+      current_traffic_light = Red  & !turnInProgress & light_timer = 0    : Green;
+      current_traffic_light = Green & light_timer = 0                     : Yellow;
+      current_traffic_light = Yellow                                      : Red;
+      TRUE                                                                : current_traffic_light;
+    esac;
+
+-- The pedestrian light module which models the pedistrian crossing signals across two directions, NS and EW.
+-- Inputs: 
+-- 1. trafficLight
+-- 2. light_timer
+MODULE pedestrianLightModule(trafficLight, light_timer)
+
+VAR
+  -- Pedestrian lights can be Dont_Walk (Red), Alert, Walk
+  current_walk_light       : {Dont_Walk, Alert, Walk};
+
+ASSIGN
+  init(current_walk_light) := Dont_Walk;
+
+  next(current_walk_light) :=
+    case
+      current_walk_light = Dont_Walk & trafficLight.current_traffic_light = Green         : Walk;
+      -- Start alerting if the light countdown timer is less than 10s.
+      trafficLight.current_traffic_light = Green & light_timer < 10                       : Alert;
+      current_walk_light = Alert & trafficLight.current_traffic_light = Red               : Dont_Walk;
+      TRUE                                                                                : current_walk_light;
+    esac;
+
+MODULE main
+
+VAR
+  turnInProgress            : boolean;
+  -- Direction in which the traffic lights are allowed to turn Green.
+  allowedDirection          : {NS, EW};
+  NSDriving                 : trafficLightModule(turnInProgress, NS, allowedDirection, light_timer);
+  EWDriving                 : trafficLightModule(turnInProgress, EW, allowedDirection, light_timer);
+  NSPedestrian              : pedestrianLightModule(NSDriving, light_timer);
+  EWPedestrian              : pedestrianLightModule(EWDriving, light_timer);
+  light_timer               : 0..30;
+  emergency		    : {NS,EW,none};
+
+ASSIGN
+  init(turnInProgress)             := FALSE;
+  init(allowedDirection)           := NS;
+  init(light_timer)                := 0;
+  init(emergency) 		   := none;
+
+  next(turnInProgress) :=
+    case
+      (NSDriving.current_traffic_light    = Red) &
+      (EWDriving.current_traffic_light    = Red)             : FALSE;
+      (NSDriving.current_traffic_light    = Green) |
+      (EWDriving.current_traffic_light    = Green)           : TRUE;
+      (NSDriving.current_traffic_light    = Yellow) |
+      (EWDriving.current_traffic_light    = Yellow)          : TRUE;
+      TRUE                                                   : turnInProgress;
+    esac;
+
+    next(allowedDirection) :=
+      case
+        (allowedDirection = NS & !turnInProgress)  : EW;
+        (allowedDirection = EW & !turnInProgress)  : NS;
+        TRUE                                       : allowedDirection;
+      esac;
+
+      next(light_timer) :=
+      case
+          (EWDriving.current_traffic_light = Green & emergency=NS)           : 0;
+          (NSDriving.current_traffic_light = Green & emergency=EW)           : 0;
+          (light_timer > 0)                                                         : light_timer - 1;
+          (light_timer = 0 & (next(NSDriving.current_traffic_light = Yellow) |
+                              next(EWDriving.current_traffic_light = Yellow)))      : 3;
+          (light_timer = 0 & (next(NSDriving.current_traffic_light = Green) |
+                              next(EWDriving.current_traffic_light = Green)))       : 27;
+          (light_timer = 0 & (next(NSDriving.current_traffic_light = Red) |
+                              next(EWDriving.current_traffic_light = Red)))         : 30;
+          TRUE                                                                      : light_timer;
+      esac;
+
+-- Sanity checks: To make sure all the traffic and pedestrian lights shall turn Green eventually.
+--SPEC EF (NSDriving.current_traffic_light = Green)
+--SPEC EF (EWDriving.current_traffic_light = Green)
+--SPEC EF (NSPedestrian.current_walk_light = Walk)
+--SPEC EF (EWPedestrian.current_walk_light = Walk)
+--SPEC EF (emergency=NS | emergency=EW)
+
+
+-- Another sanity check stated differently: Negative property we expect to
+-- be false. We can never get into the critical state.
+-- SPEC AG !(NSDriving.current_traffic_light = Green)
+-- SPEC AG !(EWDriving.current_traffic_light = Green)
+-- SPEC AG !(NSPedestrian.current_walk_light = Walk)
+-- SPEC AG !(EWPedestrian.current_walk_light = Walk)
+
+
+-- Safety Properties.
+-- REQ 1: The traffic lights shall not be green for both the directions at the same time.
+--SPEC AG !(NSDriving.current_traffic_light = Green & EWDriving.current_traffic_light = Green)
+--SPEC AG !(NSDriving.current_traffic_light = Green & EWDriving.current_traffic_light = Yellow)
+-- REQ 2: Pedestrian light shall be Red if the traffic light is Green on the crossing direction.
+--SPEC AG !(NSDriving.current_traffic_light = Green & EWPedestrian.current_walk_light = Walk)
+--SPEC AG !(EWDriving.current_traffic_light = Green & NSPedestrian.current_walk_light = Walk)
+
+-- Liveness Properties.
+-- REQ 3: If the traffic light is Green, it shall eventually in the future turn Yellow.
+--SPEC AG  (NSDriving.current_traffic_light = Green -> AF NSDriving.current_traffic_light = Yellow)
+--SPEC AG  (EWDriving.current_traffic_light = Green -> AF EWDriving.current_traffic_light = Yellow)
+-- REQ 4: If there is an emergency in a particular direction, then the traffic light shall of that respective direction shall immediately turn Green.
+--SPEC AG  (NSDriving.current_traffic_light = Red & emergency=NS -> AF NSDriving.current_traffic_light = Green)
+--SPEC AG  (EWDriving.current_traffic_light = Red & emergency=EW -> AF EWDriving.current_traffic_light = Green)
+-- REQ 5: If there is an emergency in a particular direction, then the traffic light shall eventually turn Yellow once the emergency vehicle is allowed to pass through the intersection.
+--SPEC AG  (NSDriving.current_traffic_light = Green & emergency=EW -> AF NSDriving.current_traffic_light = Yellow)
+--SPEC AG  (EWDriving.current_traffic_light = Green & emergency=NS -> AF EWDriving.current_traffic_light = Yellow)
+-- REQ 6: If the pedistrian light is Green, then it shall eventually in the future turn Red.
+--SPEC G  (NSPedestrian.current_walk_light = Walk -> AF NSPedestrian.current_walk_light = Dont_Walk)
+--SPEC AG  (EWPedestrian.current_walk_light = Walk -> AF EWPedestrian.current_walk_light = Dont_Walk)
+
+-- REQ 7: If there is an emergency then the pedestrian lights shall immediately turn Red.
+LTLSPEC G (emergency=NS -> F(EWPedestrian.current_walk_light = Dont_Walk & NSPedestrian.current_walk_light = Dont_Walk))
