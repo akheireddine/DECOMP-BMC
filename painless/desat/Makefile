@@ -10,17 +10,21 @@ endif
 ##################################################
 ###                 DeSAT                      ###
 ##################################################
-all: build-minisat
+all:  build-cadical
 	+ $(MAKE) -C Desat release  		&& \
 	mv Desat/desat .
 
+
+
 ##################################################
-###                MiniSat                     ###
+###              	  CaDiCaL                     ###
 ##################################################
-build-minisat:
-	+ $(MAKE) -C MiniSat r
+build-cadical:
+	cd cadical	                        &&\
+	./configure                             &&\
+	make
 
 clean:
-	+ $(MAKE) -C MiniSat clean
 	+ $(MAKE) clean -C Desat
+	+ $(MAKE) clean -C cadical
 	rm -rf desat

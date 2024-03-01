@@ -49,7 +49,8 @@ enum SolverType
 	LINGELING = 1,
 	MAPLE     = 2,
 	MINISAT   = 3,
-   DESAT     = 6
+   DESAT     = 6,
+   KISSAT    = 7
 };
 
 

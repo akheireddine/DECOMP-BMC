@@ -18,7 +18,7 @@
 
 #include <omp.h>
 
-#include "minisat1p.h"
+#include "cadical.h"
 #include "decomposition_batch.h"
 #include "decomposition_cycle.h"
 #include "decomposition_rnd.h"
@@ -37,51 +37,24 @@ using namespace Desat;
 
 typedef unsigned long DWORD_PTR;
 
-// std::ofstream opf;
 
-DeSAT::DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, std::string filename, int nb_clauses) : SATSolver(m),
-                                                                                                                                 globalTime(0),
-                                                                                                                                 partitionsTime(0),
-                                                                                                                                 importTime(0),
-                                                                                                                                 lastIterationTime(0),
-                                                                                                                                 maxVar(0),
-                                                                                                                                 n_clauses(nb_clauses),
-                                                                                                                                 interpolants_imported(0),
-                                                                                                                                 rounds(0),
-                                                                                                                                 d(NULL),
-                                                                                                                                 globalSolver(NULL),
-                                                                                                                                 early_stop(false),
-                                                                                                                                 solutions_imported(0),
-                                                                                                                                 all_sat_found(0),
-                                                                                                                                 filename(filename),
-                                                                                                                                 decompositionMode(decomposition)
-{
-  // FIXME not working on macos
-  init(partitions, 1); //omp_get_num_procs());
-
-  // if( !filename.empty() )
-  // opf.open(filename);
-}
-
-DeSAT::DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, unsigned cs, std::string filename, int nb_clauses) : SATSolver(m),
-                                                                                                                                              globalTime(0),
-                                                                                                                                              partitionsTime(0),
-                                                                                                                                              importTime(0),
-                                                                                                                                              lastIterationTime(0),
-                                                                                                                                              maxVar(0),
-                                                                                                                                              n_clauses(nb_clauses),
-                                                                                                                                              interpolants_imported(0),
-                                                                                                                                              d(NULL),
-                                                                                                                                              globalSolver(NULL),
-                                                                                                                                              early_stop(false),
-                                                                                                                                              solutions_imported(0),
-                                                                                                                                              all_sat_found(0),
-                                                                                                                                              filename(filename),
-                                                                                                                                              decompositionMode(decomposition)
+DeSAT::DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, 
+             unsigned cs, std::string filename) : SATSolver(m),
+                                                  globalTime(0),
+                                                  partitionsTime(0),
+                                                  importTime(0),
+                                                  lastIterationTime(0),
+                                                  maxVar(0),
+                                                  interpolants_imported(0),
+                                                  d(NULL),
+                                                  globalSolver(NULL),
+                                                  early_stop(false),
+                                                  solutions_imported(0),
+                                                  all_sat_found(0),
+                                                  filename(filename),
+                                                  decompositionMode(decomposition)
 {
   init(partitions, cs);
-  // if( !filename.empty() )
-  // opf.open(filename);
 }
 
 void DeSAT::init(unsigned ps, unsigned cs)
@@ -90,10 +63,7 @@ void DeSAT::init(unsigned ps, unsigned cs)
   n_cores = cs;
 
   if (n_partitions == 0)
-  {
-    globalSolver = new MiniSAT_1p(m, n_clauses, false);
-    // globalSolver = new MapleDeSAT(m);
-  }
+      globalSolver = new Cadical(m, false);
   else
   {
     switch (decompositionMode)
@@ -111,7 +81,6 @@ void DeSAT::init(unsigned ps, unsigned cs)
       d = new VariableDecomposition();
       break;
     case BMC:
-      // d = new BMCDecomposition(filename, n_partitions);
       d = new BMCDecomposition();
       break;
     default:
@@ -122,9 +91,9 @@ void DeSAT::init(unsigned ps, unsigned cs)
     assumptions.resize(n_partitions);
     interpolants.resize(n_partitions, m.mkNil());
     for (unsigned i = 0; i < n_partitions; i++)
-      partitions.push_back(new Partition(*(new ExpressionManager()), sharedVariables, i, n_clauses, verbosity));
-    globalSolver = new MiniSAT_1p(m, sharedVariables, n_clauses, false, LIFTING);
-    // globalSolver = new MapleDeSAT(m, sharedVariables);
+      partitions.push_back(new Partition(*(new ExpressionManager()), sharedVariables, i, verbosity));
+    
+    globalSolver = new Cadical(m, sharedVariables, false);
   }
   // FIXME not working on macos
   omp_set_num_threads(n_cores);
@@ -179,9 +148,9 @@ void DeSAT::setConstraintMode(ConstraintMode constr)
 bool DeSAT::addClause(const std::vector<signed> &literals)
 {
   assert(n_cores != 0);
-  if (n_partitions == 0)
+  if (n_partitions == 0){
     return globalSolver->addClause(literals);
-
+  }
   int w = d->where(literals);
 
   if (w == -1)
@@ -267,9 +236,9 @@ unsigned DeSAT::numClauses(void) const
   return res;
 }
 
-unsigned DeSAT::numVars(void) const
+unsigned DeSAT::numVars(void)
 {
-  return maxVar + 1;
+  return maxVar;
 }
 
 bool DeSAT::solve(const std::vector<signed> &assumptions)
@@ -278,7 +247,7 @@ bool DeSAT::solve(const std::vector<signed> &assumptions)
   return false;
 }
 
-ModelValue DeSAT::get(signed l) const
+ModelValue DeSAT::get(signed l)
 {
   throw std::runtime_error("NYI: model extraction");
   return M_UNDEF;
@@ -300,7 +269,7 @@ void DeSAT::printInterpolant(int partition, std::ofstream &op)
     op << "c " << t.c_str() << std::endl;
 }
 
-std::vector<int> DeSAT::getFinalModel(void) const
+std::vector<int> DeSAT::getFinalModel(void)
 {
   std::vector<int> model;
   std::vector<int> model_g_solver = globalSolver->getModelVector();
@@ -369,13 +338,13 @@ std::vector<std::vector<signed>> DeSAT::getNewClauses(void)
   return {};
 }
 
-std::vector<int> DeSAT::getModelVector(void) const
+std::vector<int> DeSAT::getModelVector(void)
 {
   throw std::runtime_error("NYI: model extraction");
   return {};
 }
 
-Expression DeSAT::getModel(void) const
+Expression DeSAT::getModel(void)
 {
   throw std::runtime_error("NYI: model extraction");
   return m.mkFalse();
@@ -503,7 +472,7 @@ void DeSAT::setPhase(const int var, const bool phase)
 
 bool DeSAT::solve(void)
 {
-  // std::cout << "c Solving with " << maxVar << " variables, " << numClauses() << " clauses and " << n_partitions << " partitions on " << n_cores << " cores. " << std::endl;
+  std::cout << "c Solving with " << maxVar << " variables, " << numClauses() << " clauses and " << n_partitions << " partitions on " << n_cores << " cores. " << std::endl;
   clock_t before = clock();
   std::vector<std::vector<int>> cls_list;
 
@@ -602,7 +571,7 @@ bool DeSAT::solveGlobals(void)
   while (!r && trail.size() > 0 && !early_stop)
   {
     std::vector<signed> temp;
-    globalSolver->getConflict(temp);
+    ((Cadical *)globalSolver)->getConflict(temp);
 
     signed last = 0;
     bool reason = true;
@@ -668,15 +637,15 @@ bool DeSAT::solveGlobals(void)
   }
   else if (verbosity > 1)
   {
-    print("Global Assignment:");
+    printf("Global Assignment:");
     for (int v = 1; v <= (signed)maxVar; v++)
       if (sharedVariables.isShared(v))
       {
         ModelValue mv = globalSolver->get(v);
         if (mv != M_UNDEF)
-          print(" %d", mv == M_TRUE ? v : -v);
+          printf(" %d", mv == M_TRUE ? v : -v);
       }
-    print("\n");
+    printf("\n");
   }
 
   return r;
@@ -774,6 +743,10 @@ bool DeSAT::solvePartition(int pid)
     throw exception;
   else if (have_bad_alloc)
     throw ba_exception;
+
+  // printf("Solution is %d  (",all_sat);
+  // Cadical *s = (Cadical *) partitions[pid]->getSolver();
+  // printf("status %d)\n", s->status());
 
   return all_sat;
 }
@@ -934,12 +907,10 @@ bool DeSAT::importInterpolants(std::vector<std::vector<int>> &itp_cls_export)
 
     if (!m.isTrue(itp))
     {
-      // if (verbosity>0 || opf != NULL)
+      // if (verbosity>0)
       {
         std::string t = m.toString(itp);
         // print("Global interpolant import: %s\n", t.c_str());
-        // if( opf )
-        // opf << "c " << t.c_str() << std::endl;
         //std::string filename = "filename";
         //std::stringstream convert; // stringstream used for the conversion
         //convert << rounds;
@@ -950,26 +921,21 @@ bool DeSAT::importInterpolants(std::vector<std::vector<int>> &itp_cls_export)
       globalSolver->clearNewClauses();
       globalSolver->addConstraint(itp);
       std::vector<std::vector<signed>> itp_clauses = globalSolver->getNewClauses();
+      itp_cls_export = itp_clauses; // TODO CADICAL ? est-ce necessaire
 
-      for (unsigned i = 0; i < itp_clauses.size(); i++)
-      {
-        std::vector<int> cls;
-        for (unsigned j = 0; j < itp_clauses[i].size(); j++)
-        {
-          // if( opf )
-          // opf << itp_clauses[i][j] << " ";
-          cls.emplace_back(itp_clauses[i][j]);
-        }
-        itp_cls_export.emplace_back(cls);
-        // if( opf )
-        // opf << "0" << std::endl;
-      }
+      // for (unsigned i = 0; i < itp_clauses.size(); i++)
+      // {
+      //   std::vector<int> cls;
+      //   for (unsigned j = 0; j < itp_clauses[i].size(); j++)
+      //   {
+      //     cls.emplace_back(itp_clauses[i][j]);
+      //   }
+      //   itp_cls_export.emplace_back(cls);
+      // }
 
       globalSolver->addNewClauses();
       interpolants_imported++;
       did_something = true;
-      // if ( opf )
-      // opf << "c Number of new fresh variables "<< globalSolver->numVars() - maxVar << std::endl;
     }
     interpolants[i] = m.mkNil();
   }
@@ -1024,36 +990,28 @@ bool DeSAT::importInterpolants(std::vector<std::vector<int>> &itp_cls_export, in
 
   if (!m.isTrue(itp))
   {
-    // if (verbosity>0 || opf != NULL)
+    // if (verbosity>0)
     {
       std::string t = m.toString(itp);
-      // print("Global interpolant import: %s\n", t.c_str());
-      // if( opf )
-      // opf << "c " << t.c_str() << std::endl;
     }
     globalSolver->clearNewClauses();
     globalSolver->addConstraint(itp);
     std::vector<std::vector<signed>> itp_clauses = globalSolver->getNewClauses();
+    itp_cls_export = itp_clauses; // TODO CADICAL ? est-ce necessaire
 
     for (unsigned i = 0; i < itp_clauses.size(); i++)
     {
       std::vector<int> cls;
       for (unsigned j = 0; j < itp_clauses[i].size(); j++)
       {
-        // if( opf )
-        // opf << itp_clauses[i][j] << " ";
         cls.emplace_back(itp_clauses[i][j]);
       }
       itp_cls_export.emplace_back(cls);
-      // if( opf )
-      // opf << "0" << std::endl;
     }
 
     globalSolver->addNewClauses();
     interpolants_imported++;
     did_something = true;
-    // if ( opf )
-    // opf << "c Number of new fresh variables "<< globalSolver->numVars() - maxVar << std::endl;
   }
   interpolants[i] = m.mkNil();
 

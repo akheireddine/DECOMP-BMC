@@ -110,7 +110,6 @@ void MPDeSATMaster::sendTrail(void)
 //initialization methods
 void MPDeSATMaster::setClauseMax(unsigned n)
 {
-
 	d->setClauseMax(n);
 	maxClauses = n;
 

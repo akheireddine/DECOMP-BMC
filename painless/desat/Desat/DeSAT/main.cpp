@@ -19,6 +19,7 @@
 
 #include "../libDeSAT/desat.h"
 #include <math.h>
+#include <cstring>
 
 
 //#include <desat_old.h>
@@ -29,7 +30,7 @@
 // Return values
 typedef enum { S_SAT=10, S_UNSAT=20, S_ERROR=30, S_UNDEFINED=40 } ReturnValue;
 
-#include "../MiniSat/Solver.h"
+// #include "../MiniSat/Solver.h"
 
 using namespace Desat;
 
@@ -282,8 +283,9 @@ int main(int argc, const char ** argv)
   if (cores<=0)
   {
     std::cout << "Warning: Using all available cores." << std::endl;
-    desat = new DeSAT(*m, partitions, decomposition, filename);
+    desat = new DeSAT(*m, partitions, decomposition, omp_get_num_procs(), filename);
   }
+
   else
   {
 #ifdef WIN32

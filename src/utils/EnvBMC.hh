@@ -25,7 +25,7 @@ public:
     timeout = Parameters::getIntParam("t", -1);
     memory = Parameters::getIntParam("max-memory", -1) * 1024 * 1024;
     k = Parameters::getIntParam("k", 1);
-    solver_type = Parameters::getParam("s", "minisat");
+    solver_type = Parameters::getParam("s", "cadical");
     convertor = Parameters::getIntParam("conv", 1);
     nb_leafs = Parameters::getIntParam("nleafs", 0);
     nb_grp_steps = Parameters::getIntParam("nsteps", 0);

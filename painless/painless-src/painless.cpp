@@ -79,13 +79,8 @@ void run_painless_strategyDeSAT(EnvBMC *env_bmc)
 
    if (solverType == "desat")
    {
-      // Partition the formula and solved through multiple MiniSat1.14
+      // Partition the formula and solved through multiple CaDiCaL
       solvers.push_back(SolverFactory::createDeSATSolver(env_bmc));
-   }
-   else if (solverType == "minisat-old")
-   {
-      // Flat resolution through MiniSat1.14
-      SolverFactory::createDeSATSolvers(nSolvers, env_bmc, solvers);
    }
    else if (solverType == "maple")
    {

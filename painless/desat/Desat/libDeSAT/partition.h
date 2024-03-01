@@ -9,19 +9,17 @@
 #include <expression.h>
 #include <ExpressionManager.h>
 
-#include "minisat1p.h"
+#include "cadical.h"
 #include "satsolver.h"
 #include "interpolation_mode.h"
 #include "interpolator.h"
 
 namespace Desat
 {
-
   class Partition : public SATSolver
   {
   public:
-    // Partition(SharedVariables &sharedVariables, unsigned id, unsigned verbosity=0);
-    Partition(ExpressionManager &em, SharedVariables &sharedVariables, unsigned id, int n_clauses=0, unsigned verbosity = 0, bool proof = true);
+    Partition(ExpressionManager &em, SharedVariables &sharedVariables, unsigned id, unsigned verbosity = 0, bool proof = true);
     ~Partition(void);
 
     void setInterpolationMode(InterpolationMode interpolationMode);
@@ -45,22 +43,24 @@ namespace Desat
     virtual void setIssuer(void * issuer){ throw std::runtime_error("NYI: setIssuer"); };
 
     virtual unsigned numClauses(void) const { return solver->numClauses(); };
-    virtual unsigned numVars(void) const { return solver->numVars(); };
+    virtual unsigned numVars(void) { return solver->numVars(); };
     virtual signed addVar(void) { return solver->addVar(); };
 
     virtual bool solve(void) { return solver->solve(); }
     virtual bool solve(const std::vector<signed> &assumptions) { return solver->solve(assumptions); }
 
-    virtual ModelValue get(signed l) const { return solver->get(l); }
+    virtual ModelValue get(signed l) { return solver->get(l); }
 
     virtual void setConstraintMode(ConstraintMode constr){ solver->setConstraintMode(constr); }
 
     virtual bool addConstraint(CExpression &e) { return solver->addConstraint(e); }
     virtual signed addExtension(CExpression &e) { throw std::runtime_error("NYI: addExtension"); }
 
-    virtual Expression getModel(void) const { throw std::runtime_error("NYI: getModel"); }
-    virtual std::vector<int> getModelVector(void) const { throw std::runtime_error("NYI: getModelVector"); }
-    virtual std::vector<int> getFinalModel(void) const { throw std::runtime_error("NYI: getFinalModel"); }
+    virtual int computeLBD(const std::vector<signed> &cls) { throw std::runtime_error("NYI: computeLBD");}
+
+    virtual Expression getModel(void) { throw std::runtime_error("NYI: getModel"); }
+    virtual std::vector<int> getModelVector(void) { throw std::runtime_error("NYI: getModelVector"); }
+    virtual std::vector<int> getFinalModel(void) { throw std::runtime_error("NYI: getFinalModel"); }
 
     virtual void clearNewClauses(void) { throw std::runtime_error("NYI: clearNewClauses"); };
     virtual void addNewClauses(void) { throw std::runtime_error("NYI: addNewClauses"); };
@@ -88,14 +88,7 @@ namespace Desat
     void newSolver(void)
     {
       delete solver;
-      solver = new MiniSAT_1p(m, true, LIFTING);
-    }
-
-    inline signed litToLiteral(const Lit &x)
-    {
-      bool sgn = sign(x);
-      signed v = var(x);
-      return (sgn) ? -v : v;
+      solver = new Cadical(m, true);
     }
 
   protected:

@@ -5,7 +5,7 @@ SRCS += $(shell find libDeSAT/ -name "*.cpp")
 SRCS += $(shell find DeSAT/ -name "*.cpp")
 
 OBJS = $(addsuffix .o, $(basename $(SRCS)))
-OBJS += ../MiniSat/Proof.o* ../MiniSat/Solver.o* ../MiniSat/File.o*
+OBJ += ../cadical/build/*.o
 
 EXEC = desat
 
@@ -21,10 +21,12 @@ ifeq ($(UNAME_S),Darwin)
 	CXX = xcrun g++-mp-10
 endif
 
-LIBS = -lpthread -lz -lm -lgmpxx -L/opt/local/lib/ -lgmp -fopenmp
+LIBS += -lpthread -lz -lm -lgmpxx -L/opt/local/lib/ -lgmp -fopenmp \
+	-L../cadical/build 					   \
+	-L../cadical/build -lcadical
 
-CXXFLAGS = -I../MiniSat						\
-	   -IlibDeSAT -IlibExpression -IlibRBC -IMiniSat 	\
+CXXFLAGS =  -I../cadical/ -I../cadical/src 			\
+	   -IlibDeSAT -IlibExpression -IlibRBC  -Ilibcadical	\
            $(INCLUDES) 						\
            -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS       \
            -std=c++17 -O3

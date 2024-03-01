@@ -20,12 +20,10 @@
 
 namespace Desat
 {
-
   class DeSAT : public SATSolver
   {
   public:
-    DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, std::string filename = "", int nb_clauses=0); // uses all available cores
-    DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, unsigned cores, std::string filename = "", int nb_clauses=0);
+    DeSAT(ExpressionManager &m, unsigned partitions, DecompositionMode decomposition, unsigned cores, std::string filename = "");
     virtual ~DeSAT(void);
 
     clock_t globalTime;
@@ -50,22 +48,24 @@ namespace Desat
 
     virtual signed addVar(void);
     virtual unsigned numClauses(void) const;
-    virtual unsigned numVars(void) const;
+    virtual unsigned numVars(void);
 
     virtual bool solve(void);
     virtual bool solve(const std::vector<signed> &assumptions);
 
-    inline virtual ModelValue get(signed l) const;
+    inline virtual ModelValue get(signed l);
 
     virtual Expression getInterpolant(const std::vector<signed> &A);
     virtual bool addConstraint(CExpression &e);
     virtual signed addExtension(CExpression &e);
-  
+
+    virtual int computeLBD(const std::vector<signed> &cls){ throw std::runtime_error("NYI: computeLBD"); };
+
     void printInterpolant(int partition, std::ofstream &op);
 
-    virtual Expression getModel(void) const;
-    virtual std::vector<int> getModelVector(void) const;
-    virtual std::vector<int> getFinalModel(void) const;
+    virtual Expression getModel(void);
+    virtual std::vector<int> getModelVector(void);
+    virtual std::vector<int> getFinalModel(void);
 
     virtual void clearNewClauses(void);
     virtual void addNewClauses(void);
@@ -117,7 +117,6 @@ namespace Desat
     std::string filename;
 
     bool early_stop;
-    int n_clauses;
 
     Decomposition *d;
     SATSolver *globalSolver;

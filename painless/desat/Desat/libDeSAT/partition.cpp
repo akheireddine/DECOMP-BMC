@@ -10,26 +10,17 @@
 
 #include "partition.h"
 
-//Partition::Partition(SharedVariables &sharedVariables, unsigned id, unsigned verbosity) :
-//  SATSolver(m),
-//  sharedVariables(sharedVariables),
-//  id(id),
-//  interpolator(NULL)
-//{
-//	//solver = new MiniSAT_1p(m, true, MiniSAT_1p::NORMAL);
-//	solver = new MiniSAT_1p(m, true, MiniSAT_1p::LIFTING);
-//	sharedVariables.add(&v);
-//}
+using namespace Desat;
 
-Partition::Partition(ExpressionManager &em, SharedVariables &sharedVariables, unsigned id, int n_clauses, unsigned verbosity, bool proof) :
+
+Partition::Partition(ExpressionManager &em, SharedVariables &sharedVariables, unsigned id, unsigned verbosity, bool proof) :
   m(em),
   SATSolver(em),
   sharedVariables(sharedVariables),
   id(id),
   interpolator(NULL)
 {
-	//solver = new MiniSAT_1p(m, true, NORMAL);
-	solver = new MiniSAT_1p(em, n_clauses, proof, LIFTING);
+  solver = new Cadical(em, proof);
 	sharedVariables.add(&v);
 }
 
@@ -128,17 +119,14 @@ void Partition::setPhase(const int var, const bool phase){
 
 Expression Partition::getInterpolant(const std::vector<signed> &assumptions)
 {
-
   Expression res;
 
   if (interpolator==NULL)
   {
-     bool r=solver->solve(assumptions);
+    bool r=solver->solve(assumptions);
 
-    vec<Lit> &cfs = ((MiniSAT_1p*)solver)->conflict;
-    std::vector<signed> cf_tmp;
-    for (int i=0; i<cfs.size(); i++)
-      cf_tmp.push_back(litToLiteral(cfs[i]));
+    std::vector<int> cf_tmp;
+    ((Cadical *)solver)->getConflict(cf_tmp);
 
     if (r)
       res = m.mkTrue();
